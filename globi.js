@@ -14,16 +14,17 @@ globi = function() {
 					table = img_div.append("table");
 
 					if (json.commonName && json.scientificName && json.infoURL) {
+						
+						img = table.append("tr").append("td")
+						.append("img")
+						.attr("src", json.thumbnailURL);
+
 						if (on_click_scientific_name_callback) {
-							img_div
+							img
 							.on("click", function(d) {
 								on_click_scientific_name_callback(json.scientificName);
 							});
 						}
-
-						table.append("tr").append("td")
-						.append("img")
-						.attr("src", json.thumbnailURL);
 
 						table.append("tr").append("td")
 						.text(json.commonName)
