@@ -13,6 +13,7 @@ globi = function() {
 
 					table = img_div.append("table");
 
+					
 					if (json.commonName && json.scientificName && json.infoURL) {
 						
 						img = table.append("tr").append("td")
