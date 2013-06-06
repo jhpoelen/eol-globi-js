@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<style type="text/css">
+	.taxon_img {
+		position: absolute; top: 0; left: 0; opacity: 1.0;
+	}
+	.taxon_name {
+		position: absolute; top: 0; left: 0; opacity: 0.8;
+	}
+	.taxon_img_div {
+		position: relative;
+	}
+
+	table {
+		display: inline-table;
+	}
+
+	td {
+		text-align: center;
+	}
+
+	.source {
+		stroke: #006600;
+		fill:   #00cc00;
+	}
+
+	.link {
+		stroke: black;
+		fill:   #00cc00;
+	}
+
+	</style>
+	<script src="../d3.min.js" charset="utf-8"></script>
+	<script src="../globi.js" charset="utf-8"></script>
+	<script type="text/javascript" charset="utf-8">	
+
+	window.onload = function() {
+		var width = 1000;
+		var height = 500;
+
+		var svg = d3.select("#wheel").append("svg")
+		.attr("width", width)
+		.attr("height", height);
+
+		d3.json("interactions.json", function(error, response){
+			if (!error) {
+
+				classname_for_node = function(node) {
+					return node.name.replace(' ', '_');
+				};
+
+				var interactions = {};
+				var nodes = {};
+
+				for (var i = response.data.length - 1; i >= 0; i--) {
+					inter = response.data[i];
+					
+					var source = inter[1];
+					node = new Object();
+					node.name = source;
+					node.id = inter[0];
+					
+					nodes[source] = node;
+					
+					var target = inter[4];
+					nodes[target]= {"name":target,"id":inter[3]};
+					
+					var type = inter[2];
+					var interact_id = source + '-' + type + '-' + target;
+					interactions[interact_id] = {'source':nodes[source],'type':type,'target':nodes[target]};
+				};
+
+				node_array = [];
+				
+				var number_of_nodes = 0;
+				for (node in nodes) {
+					number_of_nodes++; 
+				}
+				var i = 0;
+				for (var key in nodes) {
+					width_per_node = width / (number_of_nodes + 1);
+					nodes[key].x = width_per_node + i * width_per_node;
+					nodes[key].y = 45;
+					nodes[key].radius = width_per_node;
+					node_array.push(nodes[key]);
+					i = i + 1;
+				}
+
+				interactions_array = [];
+				for (var key in interactions) {
+					interactions[key].source = nodes[interactions[key].source.name];
+					interactions[key].target = nodes[interactions[key].target.name];
+					interactions_array.push(interactions[key]);
+				}
+
+				line_style = function(d) { return "stroke:" + (d.type == 'ATE' ? "grey" : "grey") + "; fill:none; opacity:0.1;"; };
+				line_style_active = function(d) { return "stroke:" + (d.type == 'ATE' ? "green" : "grey") + "; fill:none; opacity:0.9;"; };
+
+
+				var source_circle = svg.selectAll('.source')
+				.data(node_array)
+				.enter()
+				.append("circle")
+				.attr("class", function(d) { return "source " + classname_for_node(d); })
+				.attr("style", "fill: red; stroke: blue; opacity: 0.5;");
+
+				source_circle
+				.attr("cx", function(d) {
+					return d.x;
+				})
+				.attr("cy", function(d) {
+					return d.y;
+				})
+				.attr("r", function(d) {
+					return d.radius;
+				})
+				.on("mouseover", function(d) { 
+					d3.selectAll(".source." + classname_for_node(d)).attr("style", "fill: red; stroke: blue; opacity: 1.0;"); console.log(d.name); 
+					d3.selectAll(".link.source-" + classname_for_node(d)).attr("style", line_style_active); 
+					link_array = d3.selectAll(".link.source-" + classname_for_node(d)).data();
+					var target_names = '';
+					if (link_array.length > 1) {
+						target_names = link_array[0].target.name;
+					}
+					for (i=1; i < link_array.length; i++) {
+						target_names += ", ";
+						target_names += link_array[i].target.name;
+					}
+					d3.selectAll("#target-names").append("span").text(target_names);	
+					
+					d3.selectAll("#source-names").append("span").text(d.name);	
+					globi.add_taxon_info(d.name, "#source-taxon", function(d) {});
+					return d.name; 
+				})
+				.on("mouseout", function(d) { 
+					d3.selectAll(".source." + classname_for_node(d)).attr("style", "fill: red; stroke: blue; opacity: 0.5;"); 
+					d3.selectAll(".link.source-" + classname_for_node(d)).attr("style", line_style); 
+					d3.selectAll("#source-taxon").selectAll("span").remove();
+					d3.selectAll("#source-names").selectAll("span").remove();	
+					d3.selectAll("#target-names").selectAll("span").remove();	
+					return d.name; 
+				});	
+
+				var target_circle = svg.selectAll('.target')
+				.data(node_array)
+				.enter()
+				.append("circle")
+				.attr("class", function(d) { return "target " + classname_for_node(d); })
+				.attr("style", "fill: pink; stroke: blue; opacity: 0.5;");
+
+				target_circle
+				.attr("cx", function(d) {
+					return d.x;
+				})
+				.attr("cy", function(d) {
+					return d.y + 410;
+				})
+				.attr("r", function(d) {
+					return d.radius;
+				})
+				.on("mouseover", function(d) { 
+					d3.selectAll(".target." + classname_for_node(d)).attr("style", "fill: pink; stroke: blue; opacity: 1.0;"); 
+					d3.selectAll(".link.target-" + classname_for_node(d)).attr("style", line_style_active); 
+					link_array = d3.selectAll(".link.target-" + classname_for_node(d)).data();
+					var source_names = '';
+					if (link_array.length > 1) {
+						source_names = link_array[0].source.name;
+					}
+					for (i=1; i < link_array.length; i++) {
+						source_names += ", ";
+						source_names += link_array[i].source.name;
+					}
+					d3.selectAll("#source-names").append("span").text(source_names);	
+
+					d3.selectAll("#target-names").append("span").text(d.name);	
+					globi.add_taxon_info(d.name, "#target-taxon", function(d) {});
+					return d.name; 
+				})
+				.on("mouseout", function(d) { 
+					d3.selectAll(".target." + classname_for_node(d)).attr("style", "fill: pink; stroke: blue; opacity: 0.5;"); 
+					d3.selectAll(".link.target-" + classname_for_node(d)).attr("style", line_style); 
+					d3.selectAll("#target-taxon").selectAll("span").remove();
+					d3.selectAll("#target-names").selectAll("span").remove();	
+					d3.selectAll("#source-names").selectAll("span").remove();	
+					return d.name; 
+				});	
+
+				svg.selectAll(".link")
+				.data(interactions_array)
+				.enter()
+				.append("path")
+				.attr("class", function(d) { 
+					return "link " + "source-" + classname_for_node(d.source) + " target-" + classname_for_node(d.target); 
+				} )
+				.attr("style", line_style)
+				.attr('d', function(d) { return "M" + d.source.x + " " + d.source.y + " Q" + d.source.x + " " + d.source.y  + " " + d.target.x + " " + d.target.y + 0.1; } );
+				
+			}
+		});
+
+
+};
+
+</script>
+</head>
+<body>
+	<p>Welcome to GloBI's Proof of Concept - Bipartite graph representation source (e.g. predator) and target (e.g. prey) taxa.</p>
+	<table>
+		<tr>
+			<td>
+				
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<span class="chart" id="wheel"/>
+			</td>
+			<td>
+				<b>source taxa</b>
+				<span id="source-names"/>
+				<span id="source-taxon"/>
+			</td>
+			<td>
+				<b>target taxa</b>
+				<span id="target-names"/>
+				<span id="target-taxon"/>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				
+			</td>
+		</tr>
+		
+	</table>
+
+</body>
+</html>
