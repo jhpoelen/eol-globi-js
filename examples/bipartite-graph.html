@@ -33,7 +33,6 @@
 
 	</style>
 	<script src="../d3.min.js" charset="utf-8"></script>
-	<script src="../globi.js" charset="utf-8"></script>
 	<script type="text/javascript" charset="utf-8">	
 
 	window.onload = function() {
@@ -44,7 +43,8 @@
 		.attr("width", width)
 		.attr("height", height);
 
-		d3.json("interactions.json", function(error, response){
+		d3.json("http://trophicgraph.com:8080/interaction?lat=18.24829&lng=-66.49989", function(error, response){
+		//d3.json("interactions.json", function(error, response){
 			if (!error) {
 
 				classname_for_node = function(node) {
@@ -99,6 +99,22 @@
 				line_style_active = function(d) { return "stroke:" + (d.type == 'ATE' ? "green" : "grey") + "; fill:none; opacity:0.9;"; };
 
 
+				activate_taxa_and_links = function(d, inter_dir) {
+					d3.selectAll("." + inter_dir.start + "." + classname_for_node(d)).attr("style", "fill: red; stroke: blue; opacity: 1.0;"); console.log(d.name); 
+					d3.selectAll(".link." + inter_dir.start + "-" + classname_for_node(d)).attr("style", line_style_active); 
+					link_array = d3.selectAll(".link." + inter_dir.start + "-" + classname_for_node(d)).data();
+					var target_names = '';
+					if (link_array.length > 1) {
+						target_names = link_array[0][inter_dir.finish].name;
+					}
+					for (i=1; i < link_array.length; i++) {
+						target_names += ", ";
+						target_names += link_array[i][inter_dir.finish].name;
+					}
+					d3.selectAll("#" + inter_dir.finish + "-names").append("span").text(target_names);
+					d3.selectAll("#" + inter_dir.start + "-names").append("span").text(d.name);	
+				};
+
 				var source_circle = svg.selectAll('.source')
 				.data(node_array)
 				.enter()
@@ -117,21 +133,7 @@
 					return d.radius;
 				})
 				.on("mouseover", function(d) { 
-					d3.selectAll(".source." + classname_for_node(d)).attr("style", "fill: red; stroke: blue; opacity: 1.0;"); console.log(d.name); 
-					d3.selectAll(".link.source-" + classname_for_node(d)).attr("style", line_style_active); 
-					link_array = d3.selectAll(".link.source-" + classname_for_node(d)).data();
-					var target_names = '';
-					if (link_array.length > 1) {
-						target_names = link_array[0].target.name;
-					}
-					for (i=1; i < link_array.length; i++) {
-						target_names += ", ";
-						target_names += link_array[i].target.name;
-					}
-					d3.selectAll("#target-names").append("span").text(target_names);	
-					
-					d3.selectAll("#source-names").append("span").text(d.name);	
-					globi.add_taxon_info(d.name, "#source-taxon", function(d) {});
+					activate_taxa_and_links(d, {"start":"source","finish":"target"});
 					return d.name; 
 				})
 				.on("mouseout", function(d) { 
@@ -161,21 +163,7 @@
 					return d.radius;
 				})
 				.on("mouseover", function(d) { 
-					d3.selectAll(".target." + classname_for_node(d)).attr("style", "fill: pink; stroke: blue; opacity: 1.0;"); 
-					d3.selectAll(".link.target-" + classname_for_node(d)).attr("style", line_style_active); 
-					link_array = d3.selectAll(".link.target-" + classname_for_node(d)).data();
-					var source_names = '';
-					if (link_array.length > 1) {
-						source_names = link_array[0].source.name;
-					}
-					for (i=1; i < link_array.length; i++) {
-						source_names += ", ";
-						source_names += link_array[i].source.name;
-					}
-					d3.selectAll("#source-names").append("span").text(source_names);	
-
-					d3.selectAll("#target-names").append("span").text(d.name);	
-					globi.add_taxon_info(d.name, "#target-taxon", function(d) {});
+					activate_taxa_and_links(d, {"start":"target","finish":"source"});
 					return d.name; 
 				})
 				.on("mouseout", function(d) { 

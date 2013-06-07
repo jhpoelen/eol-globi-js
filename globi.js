@@ -15,7 +15,7 @@ globi = function() {
 
 					
 					if (json.commonName && json.scientificName && json.infoURL) {
-						
+						console.log(json);
 						img = table.append("tr").append("td")
 						.append("img")
 						.attr("src", json.thumbnailURL);
