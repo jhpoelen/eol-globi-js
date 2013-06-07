@@ -100,7 +100,7 @@
 
 
 				activate_taxa_and_links = function(d, inter_dir) {
-					d3.selectAll("." + inter_dir.start + "." + classname_for_node(d)).attr("style", "fill: red; stroke: blue; opacity: 1.0;"); console.log(d.name); 
+					d3.selectAll("." + inter_dir.start + "." + classname_for_node(d)).attr("style", "fill: red; stroke: blue; opacity: 1.0;"); 
 					d3.selectAll(".link." + inter_dir.start + "-" + classname_for_node(d)).attr("style", line_style_active); 
 					link_array = d3.selectAll(".link." + inter_dir.start + "-" + classname_for_node(d)).data();
 					var target_names = '';
