@@ -3,6 +3,7 @@ return (function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require
 var d3 = require("d3");
 
 var globi = {};
+globi.d3 = d3;
 
 var url_prefix = "http://trophicgraph.com:8080";
 
@@ -62,6 +63,8 @@ globi.view_interactions = function(div_id, interaction_type, source_target_name,
 	});
 };
 module.exports = globi;
+
+
 
 
 },{"d3":3}],2:[function(require,module,exports){
