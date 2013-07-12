@@ -1,0 +1,42 @@
+{
+  "name": "globi",
+  "version": "0.0.1",
+  "description": "embed EOL's Global Biotic Interactions Data http://github.com/jhpoelen/eol-globi-data/ in the browser",
+  "main": "globi.js",
+  "directories": {
+    "example": "examples"
+  },
+  "dependencies": {
+    "d3": "~3.2.5"
+  },
+  "devDependencies": {
+    "tape": "~1.0.4"
+  },
+  "testling": { "files": "test/*.js", "browsers": [ "ie8", "ie9", "ff/13", "chrome/20" ] },
+
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublish": "browserify . --standalone globi -o globi-dist.js"
+  },
+  
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jhpoelen/eol-globi-js.git"
+  },
+  "keywords": [
+    "eol",
+    "species",
+    "interactions",
+    "bioinformatics",
+    "browser",
+    "ecology",
+    "biodiversity"
+  ],
+  "author": "Jorrit Poelen",
+  "license": "BSD",
+  "readmeFilename": "README.md",
+  "gitHead": "d9c541e28f38619136c8b6b04aa16747b378b2d0",
+  "bugs": {
+    "url": "https://github.com/jhpoelen/eol-globi-js/issues"
+  }
+}
