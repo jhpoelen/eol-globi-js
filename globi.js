@@ -18,7 +18,7 @@ globi.add_taxon_info = function(scientific_name, div_id, on_click_scientific_nam
 				if (json.commonName && json.scientificName && json.infoURL) {
 					var img = table.append("tr").append("td")
 					.append("img")
-					.attr("src", json.thumbnailURL);
+					.attr("src", json.thumbnailURL);	
 
 					if (on_click_scientific_name_callback) {
 						img
@@ -45,21 +45,24 @@ globi.add_taxon_info = function(scientific_name, div_id, on_click_scientific_nam
 };
 
 globi.view_interactions = function(div_id, interaction_type, source_target_name, interaction_description, on_click_scientific_name_callback) {
-	var uri = url_prefix + "/taxon/" + encodeURIComponent(source_target_name) + "/" + interaction_type;
+	var uri = url_prefix + "/taxon/" + encodeURIComponent(source_target_name) + "/" + interaction_type + "?type=json.v2";
 
 	d3.json(uri, function(error, json) {
 		if (!error) {
 			var html_text = "<b>" + interaction_description + "</b>";
-			if (json.data && json.data.length == 0) {
+			if (json && json.length == 0) {
 				html_text += " <b> nothing</b>";
 			}
 			d3.select(div_id).html(html_text);
-			for (var i = 0; json.data && i <  json.data.length; i++) {
-				globi.add_taxon_info(json.data[i], div_id, on_click_scientific_name_callback);
+
+			for (var i = 0; json && i < json.length; i++) {
+				console.log(json[i]);
+				globi.add_taxon_info(json[i].target.name, div_id, on_click_scientific_name_callback);
 			};				
 		}
 	});
 };
+
 module.exports = globi;
 
 

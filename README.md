@@ -7,3 +7,4 @@ javascript library for embedding [EOL's Global Biotic Interactions Data](http://
 
 If you'd like the standalone version (including d3), please use globi-dist.js.
 
+To test, run ```node test/test.js```

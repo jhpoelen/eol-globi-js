@@ -1,4 +1,4 @@
-var mymodule = require('../');
+var globi = require('../');
 var test = require('tape');
 
 test('my first test', function(t) {
