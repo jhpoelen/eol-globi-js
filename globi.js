@@ -56,7 +56,6 @@ globi.view_interactions = function(div_id, interaction_type, source_target_name,
 			d3.select(div_id).html(html_text);
 
 			for (var i = 0; json && i < json.length; i++) {
-				console.log(json[i]);
 				globi.add_taxon_info(json[i].target.name, div_id, on_click_scientific_name_callback);
 			};				
 		}
