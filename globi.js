@@ -41,11 +41,23 @@ globi.add_taxon_info = function(scientific_name, div_id, on_click_scientific_nam
 			} 
 		} 
 	};
-	d3.json(url_prefix + "/imagesForName/" + encodeURIComponent(scientific_name), img_callback);
+	d3.json(url_for_taxon_image_query(scientific_name), img_callback);
+};
+
+globi.url_for_taxon_interaction_query = function (source_taxon_name, interaction_type, target_taxon_name) {
+	var uri = url_prefix + "/taxon/" + encodeURIComponent(source_taxon_name) + "/" + interaction_type;
+	if (target_taxon_name) {
+		uri = uri + "/" + target_taxon_name;
+	}
+	return uri + '?type=json.v2';
+};
+
+globi.url_for_taxon_image_query = function(taxon_name) {
+	return url_prefix + "/imagesForName/" + encodeURIComponent(scientific_name);
 };
 
 globi.view_interactions = function(div_id, interaction_type, source_target_name, interaction_description, on_click_scientific_name_callback) {
-	var uri = url_prefix + "/taxon/" + encodeURIComponent(source_target_name) + "/" + interaction_type + "?type=json.v2";
+	var uri = url_for_taxon_interaction_query(source_target_name, interaction_type);
 
 	d3.json(uri, function(error, json) {
 		if (!error) {
