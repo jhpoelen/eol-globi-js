@@ -169,6 +169,7 @@ window.onload = function() {
 					}
 
 					var path_color = function(d) {
+						console.log(d.path);
 						var color = color_map['other'];
 						for (var taxon_rank in color_map) {
 							if (d.path && d.path.contains(taxon_rank)) {
