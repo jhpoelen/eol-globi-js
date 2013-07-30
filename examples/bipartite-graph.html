@@ -48,7 +48,10 @@
 		d3.json("http://trophicgraph.com:8080/interaction?lat=18.24829&lng=-66.49989&type=json.v2", function(error, response){
 			if (!error) {
 
-				classname_for_node = function(node) {
+				var index_for_node = function(node) {
+					return node.path + "_" + node.name;
+				};
+				var classname_for_node = function(node) {
 					return node.name.replace(' ', '_');
 				};
 
@@ -58,26 +61,34 @@
 				for (var i = response.length - 1; i >= 0; i--) {
 					var inter = response[i];
 					var source = inter.source.name;
-					var node = {"name": source, "id": inter.source.id, "path": inter.source.path};
 					
-					nodes[source] = node;
+					var source_index = index_for_node(inter.source);
+					nodes[source_index] = {"name": source, "id": inter.source.id, "path": inter.source.path};
 					
 					var target = inter.target.name;
-					nodes[target]= {"name":target,"id":inter.target.id, "path":inter.target.path};
+					var target_index = index_for_node(inter.target);
+					nodes[target_index]= {"name":target,"id":inter.target.id, "path":inter.target.path};
 					
 					var type = inter.interaction_type;
 					var interact_id = source + '-' + type + '-' + target;
-					interactions[interact_id] = {'source':nodes[source],'type':type,'target':nodes[target]};
+					interactions[interact_id] = {'source':nodes[source_index],'type':type,'target':nodes[target_index]};
 				};
 
-				node_array = [];
+				var node_array = [];
 				
+				var node_keys = [];
+
 				var number_of_nodes = 0;
-				for (node in nodes) {
+				for (var node_key in nodes) {
 					number_of_nodes++; 
+					node_keys.push(node_key);
 				}
+
+				node_keys.sort();
+
 				var i = 0;
-				for (var key in nodes) {
+				for (var node_key in node_keys) {
+					var key = node_keys[node_key];
 					width_per_node = width / (number_of_nodes + 1);
 					nodes[key].x = width_per_node + i * width_per_node;
 					nodes[key].y = 45;
@@ -88,8 +99,8 @@
 
 				interactions_array = [];
 				for (var key in interactions) {
-					interactions[key].source = nodes[interactions[key].source.name];
-					interactions[key].target = nodes[interactions[key].target.name];
+					interactions[key].source = nodes[index_for_node(interactions[key].source)];
+					interactions[key].target = nodes[index_for_node(interactions[key].target)];
 					interactions_array.push(interactions[key]);
 				}
 
