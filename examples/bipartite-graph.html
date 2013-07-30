@@ -45,8 +45,7 @@
 		.attr("width", width)
 		.attr("height", height);
 
-		d3.json("http://trophicgraph.com:8080/interaction?lat=18.24829&lng=-66.49989", function(error, response){
-		//d3.json("interactions.json", function(error, response){
+		d3.json("http://trophicgraph.com:8080/interaction?lat=18.24829&lng=-66.49989&type=json.v2", function(error, response){
 			if (!error) {
 
 				classname_for_node = function(node) {
@@ -56,20 +55,17 @@
 				var interactions = {};
 				var nodes = {};
 
-				for (var i = response.data.length - 1; i >= 0; i--) {
-					inter = response.data[i];
-					
-					var source = inter[1];
-					node = new Object();
-					node.name = source;
-					node.id = inter[0];
+				for (var i = response.length - 1; i >= 0; i--) {
+					var inter = response[i];
+					var source = inter.source.name;
+					var node = {"name": source, "id": inter.source.id, "path": inter.source.path};
 					
 					nodes[source] = node;
 					
-					var target = inter[4];
-					nodes[target]= {"name":target,"id":inter[3]};
+					var target = inter.target.name;
+					nodes[target]= {"name":target,"id":inter.target.id, "path":inter.target.path};
 					
-					var type = inter[2];
+					var type = inter.interaction_type;
 					var interact_id = source + '-' + type + '-' + target;
 					interactions[interact_id] = {'source':nodes[source],'type':type,'target':nodes[target]};
 				};
