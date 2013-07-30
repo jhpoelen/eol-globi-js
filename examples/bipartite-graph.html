@@ -48,9 +48,14 @@
 		d3.json("http://trophicgraph.com:8080/interaction?lat=18.24829&lng=-66.49989&type=json.v2", function(error, response){
 			if (!error) {
 
+				var matched_against_taxonomy = function(node) {
+					return node.path && "no:match" != node.path;
+				}
+
 				var index_for_node = function(node) {
 					return node.path + "_" + node.name;
 				};
+				
 				var classname_for_node = function(node) {
 					return node.name.replace(' ', '_');
 				};
@@ -60,18 +65,22 @@
 
 				for (var i = response.length - 1; i >= 0; i--) {
 					var inter = response[i];
-					var source = inter.source.name;
-					
-					var source_index = index_for_node(inter.source);
-					nodes[source_index] = {"name": source, "id": inter.source.id, "path": inter.source.path};
-					
-					var target = inter.target.name;
-					var target_index = index_for_node(inter.target);
-					nodes[target_index]= {"name":target,"id":inter.target.id, "path":inter.target.path};
-					
-					var type = inter.interaction_type;
-					var interact_id = source + '-' + type + '-' + target;
-					interactions[interact_id] = {'source':nodes[source_index],'type':type,'target':nodes[target_index]};
+					if (matched_against_taxonomy(inter.source) 
+						&& matched_against_taxonomy(inter.target)) {
+						
+						var source = inter.source.name;
+
+						var source_index = index_for_node(inter.source);
+						nodes[source_index] = {"name": source, "id": inter.source.id, "path": inter.source.path};
+
+						var target = inter.target.name;
+						var target_index = index_for_node(inter.target);
+						nodes[target_index]= {"name":target,"id":inter.target.id, "path":inter.target.path};
+
+						var type = inter.interaction_type;
+						var interact_id = source + '-' + type + '-' + target;
+						interactions[interact_id] = {'source':nodes[source_index],'type':type,'target':nodes[target_index]};
+					}					
 				};
 
 				var node_array = [];
