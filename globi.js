@@ -184,15 +184,24 @@ var node_style = function(d) {
 	return "fill: " + path_color(d) + "; stroke: blue; opacity: 0.5;";
 };
 
+var node_style_active = function(d) {
+	return "fill: " + path_color(d) + "; stroke: blue; opacity: 1.0;";
+};
+
+
 var line_style = function(d) { return "stroke:" + (d.type == 'ATE' ? "lightgreen" : "pink") + "; fill:none; opacity:0.1;"; };
 
 var line_style_active = function(d) { return "stroke:" + (d.type == 'ATE' ? "green" : "red") + "; fill:none; opacity:0.9;"; };
 
 
 var activate_taxa_and_links = function(svg, d, inter_dir) {
-	svg.selectAll("." + inter_dir.start + "." + classname_for_node(d)).attr("style", "fill: red; stroke: blue; opacity: 1.0;"); 
-	svg.selectAll(".link." + inter_dir.start + "-" + classname_for_node(d)).attr("style", line_style_active); 
+	svg.selectAll("." + inter_dir.start + "." + classname_for_node(d))
+		.attr("style", node_style_active); 
+	svg.selectAll(".link." + inter_dir.start + "-" + classname_for_node(d))
+		.attr("style", line_style_active); 
+
 	link_array = svg.selectAll(".link." + inter_dir.start + "-" + classname_for_node(d)).data();
+	
 	var target_names = '';
 	if (link_array.length > 1) {
 		target_names = link_array[0][inter_dir.finish].name;
@@ -201,8 +210,9 @@ var activate_taxa_and_links = function(svg, d, inter_dir) {
 		target_names += ", ";
 		target_names += link_array[i][inter_dir.finish].name;
 	}
-	svg.selectAll("#" + inter_dir.finish + "-names").append("span").text(target_names);
-	svg.selectAll("#" + inter_dir.start + "-names").append("span").text(d.name);	
+
+	d3.selectAll("#" + inter_dir.finish + "-names").append("span").text(target_names);
+	d3.selectAll("#" + inter_dir.start + "-names").append("span").text(d.name);	
 };
 
 var add_source_taxa = function(svg, node_array, color_map) {
@@ -220,8 +230,8 @@ var add_source_taxa = function(svg, node_array, color_map) {
 		return d.name; 
 	})
 	.on("mouseout", function(d) { 
-		d3.selectAll(".source." + classname_for_node(d)).attr("style", node_style); 
-		d3.selectAll(".link.source-" + classname_for_node(d)).attr("style", line_style); 
+		svg.selectAll(".source." + classname_for_node(d)).attr("style", node_style); 
+		svg.selectAll(".link.source-" + classname_for_node(d)).attr("style", line_style); 
 		d3.selectAll("#source-taxon").selectAll("span").remove();
 		d3.selectAll("#source-names").selectAll("span").remove();	
 		d3.selectAll("#target-names").selectAll("span").remove();	
@@ -244,8 +254,8 @@ var add_target_taxa = function(svg, node_array, color_map, height) {
 		return d.name; 
 	})
 	.on("mouseout", function(d) { 
-		d3.selectAll(".target." + classname_for_node(d)).attr("style", node_style); 
-		d3.selectAll(".link.target-" + classname_for_node(d)).attr("style", line_style); 
+		svg.selectAll(".target." + classname_for_node(d)).attr("style", node_style); 
+		svg.selectAll(".link.target-" + classname_for_node(d)).attr("style", line_style); 
 		d3.selectAll("#target-taxon").selectAll("span").remove();
 		d3.selectAll("#target-names").selectAll("span").remove();	
 		d3.selectAll("#source-names").selectAll("span").remove();	
@@ -276,7 +286,7 @@ globi.add_interaction_graph = function(location, div_ids, width, height) {
 	add_legend(div_ids.legend_id, color_map, width, height);
 
 	
-	var json_local = true;
+	var json_local = false;
 	var json_resource = json_local ? "interactions.json" : "http://trophicgraph.com:8080/interaction?type=json.v2&" + location_query(location);
 
 	d3.json(json_resource, function(error, response) {
