@@ -203,7 +203,7 @@ var activate_taxa_and_links = function(svg, d, inter_dir) {
 		.attr("style", line_style_active); 
 
 	link_array = svg.selectAll(".link." + inter_dir.start + "-" + classname_for_node(d)).data();
-	console.log('link_array' + link_array[0][inter_dir.finish]);
+	
 	var target_names = '';
 	if (link_array.length > 1) {
 		target_names = link_array[0][inter_dir.finish].name;
