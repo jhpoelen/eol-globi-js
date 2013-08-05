@@ -1,60 +1,64 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="utf-8">
-	<style type="text/css">
-	table {
-		display: inline-table;
-	}
+    <meta charset="utf-8">
+    <style type="text/css">
+        table {
+            display: inline-table;
+        }
 
-	td {
-		text-align: center;
-	}
+        td {
+            text-align: center;
+        }
 
-</style>
-	<script src="../globi-dist.js" charset="utf-8"></script>
-	<script type="text/javascript" charset="utf-8">	
+    </style>
+    <script src="../globi-dist.js" charset="utf-8"></script>
+    <script type="text/javascript" charset="utf-8">
 
-	window.onload = function() {
-		// default location is in/near Puerto Rico
-		var location ={ "nw_lat": 18.25, "nw_lng": -66.50, "se_lat": 18.24, "se_lng": -66.49};
-		var ids = {"graphId":"interaction_graph", "legendId":"interaction_graph_legend"};
-		var width = 1000;
-		var height = 500;
-		globi.addInteractionGraph(location, ids, width, height);
-	};
+        var locations =
+        {"california": { "nw_lat": 41.574361, "nw_lng": -125.533448, "se_lat": 32.750323, "se_lng": -114.744873},
+        "puertoRico": { "nw_lat": 18.25, "nw_lng": -66.50, "se_lat": 18.24, "se_lng": -66.49}};
 
-	</script>
+        window.onload = function () {
+            var ids = {"graphId": "interaction_graph", "legendId": "interaction_graph_legend"};
+            var width = 1000;
+            var height = 500;
+
+            globi.addInteractionGraph(locations.california, ids, width, height);
+        };
+
+    </script>
 </head>
 <body>
-	<p>Welcome to GloBI's Proof of Concept - Bipartite graph representation source (e.g. predator) and target (e.g. prey) taxa.</p>
-	<table>
-		<tr>
-			<td width='1000' height='100'>
-				<b>source taxa</b>
-				<span id="source-names"/>
-				<span id="source-taxon"/>
-			</td>
-		</tr>
-		<tr>
-			<td>
-				<span class="chart" id="interaction_graph"/>
-			</td>
-			<td>
-				<span id="interaction_graph_legend"/>
-			</td>
-		</tr>
-		<td width='1000'>
-			<b>target taxa</b>
-			<span id="target-names"/>
-			<span id="target-taxon"/>
-		</td>
-	</tr>
-	<tr>
-		<td>
+<p>Welcome to GloBI's Proof of Concept - Bipartite graph representation source (e.g. predator) and target (e.g. prey)
+    taxa.</p>
+<table>
+    <tr>
+        <td width='1000' height='100'>
+            <b>source taxa</b>
+            <span id="source-names"/>
+            <span id="source-taxon"/>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <span class="chart" id="interaction_graph"/>
+        </td>
+        <td>
+            <span id="interaction_graph_legend"/>
+        </td>
+    </tr>
+    <td width='1000'>
+        <b>target taxa</b>
+        <span id="target-names"/>
+        <span id="target-taxon"/>
+    </td>
+    </tr>
+    <tr>
+        <td>
 
-		</td>
-	</tr>
+        </td>
+    </tr>
 
 </table>
 
