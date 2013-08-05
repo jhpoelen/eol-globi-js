@@ -73,8 +73,6 @@ globi.viewInteractions = function (id, interactionType, sourceTaxonScientificNam
     };
     var search = {"sourceTaxonScientificName": sourceTaxonScientificName, "interactionType":interactionType};
     globiData.findSpeciesInteractions(search, renderInteractions);
-
-
 };
 
 var matchAgainstTaxonomy = function (node) {
@@ -304,14 +302,12 @@ var addInteraction = function (svg, interactionArray) {
 };
 
 
-// subtrack encapsulate parameters
 globi.addInteractionGraph = function (location, ids, width, height) {
     var svg = d3.select("#" + ids.graphId).append("svg")
         .attr("width", width)
         .attr("height", height);
 
     addLegend(ids.legendId, taxonColorMap, width, height);
-
 
     var callback = function (error, response) {
         if (!error) {
@@ -358,7 +354,7 @@ globi.addInteractionGraph = function (location, ids, width, height) {
         }
     };
 
-    var search = {"location": location};
+    var search = {"location": location}
     globiData.findSpeciesInteractions(search, callback);
 };
 

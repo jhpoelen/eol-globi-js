@@ -75,8 +75,6 @@ globi.viewInteractions = function (id, interactionType, sourceTaxonScientificNam
     };
     var search = {"sourceTaxonScientificName": sourceTaxonScientificName, "interactionType":interactionType};
     globiData.findSpeciesInteractions(search, renderInteractions);
-
-
 };
 
 var matchAgainstTaxonomy = function (node) {
@@ -175,14 +173,6 @@ var addLegend = function (id, colorMap, width, height) {
             return 1.2 * height / 50 + radius + d.id * (yOffset + (radius * 2));
         });
 
-}
-
-var locationQuery = function (location) {
-    var locationQuery = "";
-    for (var elem in location) {
-        locationQuery += elem + "=" + location[elem] + "&";
-    }
-    return locationQuery;
 }
 
 var pathColor = function (d) {
@@ -322,11 +312,9 @@ globi.addInteractionGraph = function (location, ids, width, height) {
 
     addLegend(ids.legendId, taxonColorMap, width, height);
 
+    console.log("hello");
 
-    var json_local = false;
-    var json_resource = json_local ? "interactions.json" : "http://trophicgraph.com:8080/interaction?type=json.v2&" + locationQuery(location);
-
-    d3.json(json_resource, function (error, response) {
+    var callback = function (error, response) {
         if (!error) {
 
             var interactions = {};
@@ -369,7 +357,11 @@ globi.addInteractionGraph = function (location, ids, width, height) {
             addTargetTaxonNodes(svg, taxonNodes, taxonColorMap, height);
             addInteraction(svg, interactionsArray);
         }
-    });
+    };
+
+    var search = {"location": location}
+    console.log("searching with [" + location + "]");
+    globiData.findSpeciesInteractions(search, callback);
 };
 
 module.exports = globi;
@@ -9187,12 +9179,32 @@ globiData.d3 = d3;
 
 var urlPrefix = "http://trophicgraph.com:8080";
 
-globiData.urlForTaxonInteractionQuery = function (search) {
-    var uri = urlPrefix + "/taxon/" + encodeURIComponent(search.sourceTaxonScientificName) + "/" + search.interactionType;
-    if (search.targetTaxonScientificName) {
-        uri = uri + "/" + encodeURIComponent(search.targetTaxonScientificName);
+var locationQuery = function (location) {
+    var locationQuery = "";
+    for (var elem in location) {
+        locationQuery += elem + "=" + location[elem] + "&";
     }
-    return uri + '?type=json.v2';
+    return locationQuery;
+}
+
+
+globiData.urlForTaxonInteractionQuery = function (search) {
+    var uri = urlPrefix;
+
+    if (search.sourceTaxonScientificName) {
+        uri = uri + "/taxon/" + encodeURIComponent(search.sourceTaxonScientificName) + "/" + search.interactionType;
+        if (search.targetTaxonScientificName) {
+            uri = uri + "/" + encodeURIComponent(search.targetTaxonScientificName);
+        }
+    } else {
+        uri = uri + "/interaction";
+    }
+
+    uri = uri + '?type=json.v2';
+    if (search.location) {
+        uri = uri + '&' + locationQuery(search.location);
+    }
+    return uri;
 };
 
 globiData.urlForTaxonImageQuery = function (scientificName) {
@@ -9201,6 +9213,7 @@ globiData.urlForTaxonImageQuery = function (scientificName) {
 
 globiData.findSpeciesInteractions = function (search, callback) {
     var uri = globiData.urlForTaxonInteractionQuery(search);
+    console.log('requesting interaction data from: [' + uri + ']');
     d3.json(uri, callback);
 };
 
