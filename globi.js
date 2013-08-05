@@ -175,14 +175,6 @@ var addLegend = function (id, colorMap, width, height) {
 
 }
 
-var locationQuery = function (location) {
-    var locationQuery = "";
-    for (var elem in location) {
-        locationQuery += elem + "=" + location[elem] + "&";
-    }
-    return locationQuery;
-}
-
 var pathColor = function (d) {
     var color = taxonColorMap['other'];
     for (var taxonRank in taxonColorMap) {
@@ -321,10 +313,7 @@ globi.addInteractionGraph = function (location, ids, width, height) {
     addLegend(ids.legendId, taxonColorMap, width, height);
 
 
-    var json_local = false;
-    var json_resource = json_local ? "interactions.json" : "http://trophicgraph.com:8080/interaction?type=json.v2&" + locationQuery(location);
-
-    d3.json(json_resource, function (error, response) {
+    var callback = function (error, response) {
         if (!error) {
 
             var interactions = {};
@@ -367,7 +356,10 @@ globi.addInteractionGraph = function (location, ids, width, height) {
             addTargetTaxonNodes(svg, taxonNodes, taxonColorMap, height);
             addInteraction(svg, interactionsArray);
         }
-    });
+    };
+
+    var search = {"location": location};
+    globiData.findSpeciesInteractions(search, callback);
 };
 
 module.exports = globi;
