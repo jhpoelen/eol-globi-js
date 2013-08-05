@@ -1,16 +1,13 @@
 var d3 = require("d3");
+var globiData = require("globi-data");
 
 var globi = {};
 globi.d3 = d3;
-
-var urlPrefix = "http://trophicgraph.com:8080";
+globi.globiData = globiData;
 
 // comments from code workshop 1 Aug 2013
-// Bemson - separate data from visualize
 // substack - bin-fields to use app /utils
-// Ryan - callback too specific, div_id -> id
 // matt - document function with comments
-// bemson - colorMap function -> use object dynamic rather than assocation
 // jack - introduce auto-complete, provide feedbackafter submit a search, fuzzy search
 // ryan - top 5 searches
 // bemson - drop-down
@@ -19,18 +16,6 @@ var urlPrefix = "http://trophicgraph.com:8080";
 // substack - populate full data in server replies to reduce round trips
 // Substack/sorta - good example of dynamically insert, let consumer attach content whenever they want
 // Ryan/ Bemsom - encapsulate, pass in functions
-var urlForTaxonInteractionQuery = function (sourceTaxonScientificName, interactionType, targetTaxonScientificName) {
-    var uri = urlPrefix + "/taxon/" + encodeURIComponent(sourceTaxonScientificName) + "/" + interactionType;
-    if (targetTaxonScientificName) {
-        uri = uri + "/" + targetTaxonScientificName;
-    }
-    return uri + '?type=json.v2';
-};
-
-var urlForTaxonImageQuery = function (taxonName) {
-    return urlPrefix + "/imagesForName/" + encodeURIComponent(taxonName);
-};
-
 
 globi.addTaxonInfo = function (scientificName, id, onClickScientificCallback) {
     var imageCallback = function (error, json) {
@@ -67,13 +52,13 @@ globi.addTaxonInfo = function (scientificName, id, onClickScientificCallback) {
             }
         }
     };
-    d3.json(urlForTaxonImageQuery(scientificName), imageCallback);
+    globiData.findTaxonInfo(scientificName, imageCallback);
 };
 
 globi.viewInteractions = function (id, interactionType, sourceTaxonScientificName, interactionDescription, onClickScientificName) {
-    var uri = urlForTaxonInteractionQuery(sourceTaxonScientificName, interactionType);
 
-    d3.json(uri, function (error, json) {
+
+    var renderInteractions =  function (error, json) {
         if (!error) {
             var htmlText = "<b>" + interactionDescription + "</b>";
             if (json && json.length == 0) {
@@ -85,7 +70,11 @@ globi.viewInteractions = function (id, interactionType, sourceTaxonScientificNam
                 globi.addTaxonInfo(json[i].target.name, id, onClickScientificName);
             }
         }
-    });
+    };
+    var search = {"sourceTaxonScientificName": sourceTaxonScientificName, "interactionType":interactionType};
+    globiData.findSpeciesInteractions(search, renderInteractions);
+
+
 };
 
 var matchAgainstTaxonomy = function (node) {

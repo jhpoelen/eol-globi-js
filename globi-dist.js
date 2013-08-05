@@ -1,18 +1,15 @@
 (function(e){if("function"==typeof bootstrap)bootstrap("globi",e);else if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else if("undefined"!=typeof ses){if(!ses.ok())return;ses.makeGlobi=e}else"undefined"!=typeof window?window.globi=e():global.globi=e()})(function(){var define,ses,bootstrap,module,exports;
 return (function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({1:[function(require,module,exports){
 var d3 = require("d3");
+var globiData = require("globi-data");
 
 var globi = {};
 globi.d3 = d3;
-
-var urlPrefix = "http://trophicgraph.com:8080";
+globi.globiData = globiData;
 
 // comments from code workshop 1 Aug 2013
-// Bemson - separate data from visualize
 // substack - bin-fields to use app /utils
-// Ryan - callback too specific, div_id -> id
 // matt - document function with comments
-// bemson - colorMap function -> use object dynamic rather than assocation
 // jack - introduce auto-complete, provide feedbackafter submit a search, fuzzy search
 // ryan - top 5 searches
 // bemson - drop-down
@@ -21,18 +18,6 @@ var urlPrefix = "http://trophicgraph.com:8080";
 // substack - populate full data in server replies to reduce round trips
 // Substack/sorta - good example of dynamically insert, let consumer attach content whenever they want
 // Ryan/ Bemsom - encapsulate, pass in functions
-var urlForTaxonInteractionQuery = function (sourceTaxonScientificName, interactionType, targetTaxonScientificName) {
-    var uri = urlPrefix + "/taxon/" + encodeURIComponent(sourceTaxonScientificName) + "/" + interactionType;
-    if (targetTaxonScientificName) {
-        uri = uri + "/" + targetTaxonScientificName;
-    }
-    return uri + '?type=json.v2';
-};
-
-var urlForTaxonImageQuery = function (taxonName) {
-    return urlPrefix + "/imagesForName/" + encodeURIComponent(taxonName);
-};
-
 
 globi.addTaxonInfo = function (scientificName, id, onClickScientificCallback) {
     var imageCallback = function (error, json) {
@@ -69,13 +54,13 @@ globi.addTaxonInfo = function (scientificName, id, onClickScientificCallback) {
             }
         }
     };
-    d3.json(urlForTaxonImageQuery(scientificName), imageCallback);
+    globiData.findTaxonInfo(scientificName, imageCallback);
 };
 
 globi.viewInteractions = function (id, interactionType, sourceTaxonScientificName, interactionDescription, onClickScientificName) {
-    var uri = urlForTaxonInteractionQuery(sourceTaxonScientificName, interactionType);
 
-    d3.json(uri, function (error, json) {
+
+    var renderInteractions =  function (error, json) {
         if (!error) {
             var htmlText = "<b>" + interactionDescription + "</b>";
             if (json && json.length == 0) {
@@ -87,7 +72,11 @@ globi.viewInteractions = function (id, interactionType, sourceTaxonScientificNam
                 globi.addTaxonInfo(json[i].target.name, id, onClickScientificName);
             }
         }
-    });
+    };
+    var search = {"sourceTaxonScientificName": sourceTaxonScientificName, "interactionType":interactionType};
+    globiData.findSpeciesInteractions(search, renderInteractions);
+
+
 };
 
 var matchAgainstTaxonomy = function (node) {
@@ -197,11 +186,10 @@ var locationQuery = function (location) {
 }
 
 var pathColor = function (d) {
-    colorMap = taxonColorMap();
-    var color = colorMap['other'];
-    for (var taxonRank in colorMap) {
+    var color = taxonColorMap['other'];
+    for (var taxonRank in taxonColorMap) {
         if (d.path && d.path.contains(taxonRank)) {
-            color = colorMap[taxonRank];
+            color = taxonColorMap[taxonRank];
             break;
         }
     }
@@ -332,9 +320,7 @@ globi.addInteractionGraph = function (location, ids, width, height) {
         .attr("width", width)
         .attr("height", height);
 
-    var colorMap = taxonColorMap();
-
-    addLegend(ids.legendId, colorMap, width, height);
+    addLegend(ids.legendId, taxonColorMap, width, height);
 
 
     var json_local = false;
@@ -380,7 +366,7 @@ globi.addInteractionGraph = function (location, ids, width, height) {
             }
 
             addSourceTaxonNodes(svg, taxonNodes);
-            addTargetTaxonNodes(svg, taxonNodes, colorMap, height);
+            addTargetTaxonNodes(svg, taxonNodes, taxonColorMap, height);
             addInteraction(svg, interactionsArray);
         }
     });
@@ -391,7 +377,7 @@ module.exports = globi;
 
 
 
-},{"d3":3}],2:[function(require,module,exports){
+},{"d3":3,"globi-data":4}],2:[function(require,module,exports){
 d3 = function() {
   var d3 = {
     version: "3.2.7"
@@ -9193,6 +9179,38 @@ module.exports = d3;
 (function () { delete this.d3; })(); // unset global
 
 })()
-},{"./d3":2}]},{},[1])(1)
+},{"./d3":2}],4:[function(require,module,exports){
+var d3 = require("d3");
+
+var globiData = {};
+globiData.d3 = d3;
+
+var urlPrefix = "http://trophicgraph.com:8080";
+
+globiData.urlForTaxonInteractionQuery = function (search) {
+    var uri = urlPrefix + "/taxon/" + encodeURIComponent(search.sourceTaxonScientificName) + "/" + search.interactionType;
+    if (search.targetTaxonScientificName) {
+        uri = uri + "/" + encodeURIComponent(search.targetTaxonScientificName);
+    }
+    return uri + '?type=json.v2';
+};
+
+globiData.urlForTaxonImageQuery = function (scientificName) {
+    return urlPrefix + "/imagesForName/" + encodeURIComponent(scientificName);
+};
+
+globiData.findSpeciesInteractions = function (search, callback) {
+    var uri = globiData.urlForTaxonInteractionQuery(search);
+    d3.json(uri, callback);
+};
+
+globiData.findTaxonInfo = function (scientificName, callback) {
+    d3.json(globiData.urlForTaxonImageQuery(scientificName), callback)
+};
+
+
+module.exports = globiData;
+
+},{"d3":3}]},{},[1])(1)
 });
 ;
