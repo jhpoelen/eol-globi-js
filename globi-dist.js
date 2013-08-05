@@ -304,15 +304,12 @@ var addInteraction = function (svg, interactionArray) {
 };
 
 
-// subtrack encapsulate parameters
 globi.addInteractionGraph = function (location, ids, width, height) {
     var svg = d3.select("#" + ids.graphId).append("svg")
         .attr("width", width)
         .attr("height", height);
 
     addLegend(ids.legendId, taxonColorMap, width, height);
-
-    console.log("hello");
 
     var callback = function (error, response) {
         if (!error) {
@@ -360,7 +357,6 @@ globi.addInteractionGraph = function (location, ids, width, height) {
     };
 
     var search = {"location": location}
-    console.log("searching with [" + location + "]");
     globiData.findSpeciesInteractions(search, callback);
 };
 
