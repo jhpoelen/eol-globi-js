@@ -20,333 +20,365 @@ var urlPrefix = "http://trophicgraph.com:8080";
 // Substack/sorta - good example of dynamically insert, let consumer attach content whenever they want
 // Ryan/ Bemsom - encapsulate, pass in functions
 var urlForTaxonInteractionQuery = function (sourceTaxonScientificName, interactionType, targetTaxonScientificName) {
-	var uri = urlPrefix + "/taxon/" + encodeURIComponent(sourceTaxonScientificName) + "/" + interactionType;
-	if (targetTaxonScientificName) {
-		uri = uri + "/" + targetTaxonScientificName;
-	}
-	return uri + '?type=json.v2';
+    var uri = urlPrefix + "/taxon/" + encodeURIComponent(sourceTaxonScientificName) + "/" + interactionType;
+    if (targetTaxonScientificName) {
+        uri = uri + "/" + targetTaxonScientificName;
+    }
+    return uri + '?type=json.v2';
 };
 
-var urlForTaxonImageQuery = function(taxonName) {
-	return urlPrefix + "/imagesForName/" + encodeURIComponent(taxonName);
+var urlForTaxonImageQuery = function (taxonName) {
+    return urlPrefix + "/imagesForName/" + encodeURIComponent(taxonName);
 };
 
 
-globi.addTaxonInfo = function(scientificName, id, onClickScientificCallback) {
-	var imageCallback = function(error, json) {
-		if (!error) {
-			if (json.thumbnailURL) {
-				var imgId = d3.select(id)
-				.append("span")
+globi.addTaxonInfo = function (scientificName, id, onClickScientificCallback) {
+    var imageCallback = function (error, json) {
+        if (!error) {
+            if (json.thumbnailURL) {
+                var imgId = d3.select(id)
+                    .append("span")
 
-				var table = imgId.append("table");
+                var table = imgId.append("table");
 
-				
-				if (json.commonName && json.scientificName && json.infoURL) {
-					var img = table.append("tr").append("td")
-					.append("img")
-					.attr("src", json.thumbnailURL);	
 
-					if (onClickScientificCallback) {
-						img
-						.on("click", function(d) {
-							onClickScientificCallback(json.scientificName);
-						});
-					}
+                if (json.commonName && json.scientificName && json.infoURL) {
+                    var img = table.append("tr").append("td")
+                        .append("img")
+                        .attr("src", json.thumbnailURL);
 
-					table.append("tr").append("td")
-					.text(json.commonName)
-					.append("a")
-					.attr("href", json.infoURL)
-					.attr("target", "_blank")
-					.text(" >");
-					
-					var scientificNameCell = table.append("tr").append("td");
-					scientificNameCell.html("<i>" + json.scientificName + "</i>");
-				}	
-			} 
-		} 
-	};
-	d3.json(urlForTaxonImageQuery(scientificName), imageCallback);
+                    if (onClickScientificCallback) {
+                        img
+                            .on("click", function (d) {
+                                onClickScientificCallback(json.scientificName);
+                            });
+                    }
+
+                    table.append("tr").append("td")
+                        .text(json.commonName)
+                        .append("a")
+                        .attr("href", json.infoURL)
+                        .attr("target", "_blank")
+                        .text(" >");
+
+                    var scientificNameCell = table.append("tr").append("td");
+                    scientificNameCell.html("<i>" + json.scientificName + "</i>");
+                }
+            }
+        }
+    };
+    d3.json(urlForTaxonImageQuery(scientificName), imageCallback);
 };
 
-globi.viewInteractions = function(id, interactionType, sourceTaxonScientificName, interactionDescription, onClickScientificName) {
-	var uri = urlForTaxonInteractionQuery(sourceTaxonScientificName, interactionType);
+globi.viewInteractions = function (id, interactionType, sourceTaxonScientificName, interactionDescription, onClickScientificName) {
+    var uri = urlForTaxonInteractionQuery(sourceTaxonScientificName, interactionType);
 
-	d3.json(uri, function(error, json) {
-		if (!error) {
-			var htmlText = "<b>" + interactionDescription + "</b>";
-			if (json && json.length == 0) {
-				htmlText += " <b> nothing</b>";
-			}
-			d3.select(id).html(htmlText);
+    d3.json(uri, function (error, json) {
+        if (!error) {
+            var htmlText = "<b>" + interactionDescription + "</b>";
+            if (json && json.length == 0) {
+                htmlText += " <b> nothing</b>";
+            }
+            d3.select(id).html(htmlText);
 
-			for (var i = 0; json && i < json.length; i++) {
-				globi.addTaxonInfo(json[i].target.name, id, onClickScientificName);
-			};				
-		}
-	});
+            for (var i = 0; json && i < json.length; i++) {
+                globi.addTaxonInfo(json[i].target.name, id, onClickScientificName);
+            }
+        }
+    });
 };
 
-var matchAgainstTaxonomy = function(node) {
-	return node.path && "no:match" != node.path;
+var matchAgainstTaxonomy = function (node) {
+    return node.path && "no:match" != node.path;
 }
 
-var indexForNode = function(node) {
-	return node.path + "_" + node.name;
+var indexForNode = function (node) {
+    return node.path + "_" + node.name;
 };
 
-var classnameForNode = function(node) {
-	return node.name.replace(' ', '_');
+var classnameForNode = function (node) {
+    return node.name.replace(' ', '_');
 };
 
-var parse = function(response, interactions, nodes) {
-	for (var i = response.length - 1; i >= 0; i--) {
-		var inter = response[i];
-		if (matchAgainstTaxonomy(inter.source)
-			&& matchAgainstTaxonomy(inter.target)) {
-			var source = inter.source.name;
+var parse = function (response, interactions, nodes) {
+    for (var i = response.length - 1; i >= 0; i--) {
+        var inter = response[i];
+        if (matchAgainstTaxonomy(inter.source)
+            && matchAgainstTaxonomy(inter.target)) {
+            var source = inter.source.name;
 
-		var sourceIndex = indexForNode(inter.source);
-		nodes[sourceIndex] = {"name": source, "id": inter.source.id, "path": inter.source.path};
+            var sourceIndex = indexForNode(inter.source);
+            nodes[sourceIndex] = {"name": source, "id": inter.source.id, "path": inter.source.path};
 
-		var target = inter.target.name;
-		var targetIndex = indexForNode(inter.target);
-		nodes[targetIndex]= {"name":target,"id":inter.target.id, "path":inter.target.path};
+            var target = inter.target.name;
+            var targetIndex = indexForNode(inter.target);
+            nodes[targetIndex] = {"name": target, "id": inter.target.id, "path": inter.target.path};
 
-		var type = inter.interaction_type;
-		var interactionIndex = source + '-' + type + '-' + target;
-		interactions[interactionIndex] = {'source':nodes[sourceIndex],'type':type,'target':nodes[targetIndex]};
-	}					
+            var type = inter.interaction_type;
+            var interactionIndex = source + '-' + type + '-' + target;
+            interactions[interactionIndex] = {'source': nodes[sourceIndex], 'type': type, 'target': nodes[targetIndex]};
+        }
+    }
+};
+
+var taxonColorMap = [];
+taxonColorMap.Arthropoda = 'red';
+taxonColorMap.Mammalia = 'lightblue';
+taxonColorMap.Aves = 'brown';
+taxonColorMap.Actinopterygii = 'blue';
+taxonColorMap.Arachnida = 'pink';
+taxonColorMap.Mollusca = 'orange';
+taxonColorMap.Plantae = 'green';
+taxonColorMap.Amphibia = 'violet';
+taxonColorMap.Reptilia = 'yellow';
+taxonColorMap.Bacteria = 'magenta';
+taxonColorMap.other = 'gray';
+
+var addLegend = function (id, colorMap, width, height) {
+    var taxonRankColors = [];
+    var i = 1;
+    for (var taxon_rank in colorMap) {
+        taxonRankColors.push({"rank": taxon_rank, "color": colorMap[taxon_rank], "id": i });
+        i++;
+    }
+
+    var legend = d3.select("#" + id).append("svg")
+        .attr("width", width / 5)
+        .attr("height", height);
+
+    var radius = height / taxonRankColors.length / 4;
+    var yOffset = (height - 2 * radius * taxonRankColors.length) / taxonRankColors.length / 2;
+    var xOffset = width / 20;
+
+    legend.selectAll('circle')
+        .data(taxonRankColors)
+        .enter()
+        .append('circle')
+        .attr("style", function (d) {
+            return "fill:" + d.color;
+        })
+        .attr("cx", function (d) {
+            return xOffset + radius;
+        })
+        .attr("cy", function (d) {
+            return height / 50 + radius + d.id * (yOffset + (radius * 2));
+        })
+        .attr("r", function (d) {
+            return radius;
+        });
+
+    legend.selectAll('text')
+        .data(taxonRankColors)
+        .enter()
+        .append('text')
+        .text(function (d) {
+            return d.rank;
+        })
+        .style("font-size", function (d) {
+            return height / 30 + "px";
+        })
+        .attr("x", function (d) {
+            return xOffset * 1.4 + radius;
+        })
+        .attr("y", function (d) {
+            return 1.2 * height / 50 + radius + d.id * (yOffset + (radius * 2));
+        });
+
 }
-};
 
-var taxonColorMap = function() {
-	var colorMap = [];
-	colorMap['Arthropoda'] = 'red';
-	colorMap['Mammalia'] = 'lightblue';
-	colorMap['Aves'] = 'brown';
-	colorMap['Actinopterygii'] = 'blue';
-	colorMap['Arachnida'] = 'pink';
-	colorMap['Mollusca'] = 'orange';
-	colorMap['Plantae'] = 'green';
-	colorMap['Amphibia'] = 'violet';
-	colorMap['Reptilia'] = 'yellow';
-	colorMap['Bacteria'] = 'magenta';
-	colorMap['other'] = 'gray';
-	return colorMap;
-};
-
-var addLegend = function(id, colorMap, width, height) {
-	var taxonRankColors = [];
-	var i = 1;
-	for (var taxon_rank in colorMap) {
-		taxonRankColors.push({"rank": taxon_rank, "color": colorMap[taxon_rank], "id": i });
-		i++;
-	}
-	
-	var legend = d3.select("#" + id).append("svg")
-	.attr("width", width / 5)
-	.attr("height", height);
-
-	var radius = height / taxonRankColors.length / 4;
-	var yOffset = (height - 2 * radius * taxonRankColors.length) / taxonRankColors.length / 2;
-	var xOffset = width / 20;
-
-	legend.selectAll('circle')
-	.data(taxonRankColors)
-	.enter()
-	.append('circle')
-	.attr("style", function(d) { return "fill:" + d.color; })
-	.attr("cx", function(d) { return xOffset + radius; })
-	.attr("cy", function(d) { return height/50 + radius + d.id * (yOffset + (radius * 2)); })
-	.attr("r", function(d) { return radius; });
-
-	legend.selectAll('text')
-	.data(taxonRankColors)
-	.enter()
-	.append('text')
-	.text(function(d) { return d.rank; })
-	.style("font-size", function(d) { return height/30 + "px"; })
-	.attr("x", function(d) { return xOffset * 1.4 + radius; })
-	.attr("y", function(d) { return 1.2*height/50 + radius + d.id * (yOffset + (radius * 2)); });
-
+var locationQuery = function (location) {
+    var locationQuery = "";
+    for (var elem in location) {
+        locationQuery += elem + "=" + location[elem] + "&";
+    }
+    return locationQuery;
 }
 
-var locationQuery = function(location) {
-	var locationQuery = "";
-	for (var elem in location) {
-		locationQuery += elem + "=" + location[elem] + "&";
-	}
-	return locationQuery;
-}
-
-var pathColor = function(d) {
-	colorMap = taxonColorMap();
-	var color = colorMap['other'];
-	for (var taxonRank in colorMap) {
-		if (d.path && d.path.contains(taxonRank)) {
-			color = colorMap[taxonRank];
-			break;
-		}	
-	}
-	return color;
+var pathColor = function (d) {
+    var color = taxonColorMap['other'];
+    for (var taxonRank in taxonColorMap) {
+        if (d.path && d.path.contains(taxonRank)) {
+            color = taxonColorMap[taxonRank];
+            break;
+        }
+    }
+    return color;
 };
 
-var nodeStyle = function(d) {
-	return "fill: " + pathColor(d) + "; stroke: blue; opacity: 0.5;";
+var nodeStyle = function (d) {
+    return "fill: " + pathColor(d) + "; stroke: blue; opacity: 0.5;";
 };
 
-var nodeStyleActive = function(d) {
-	return "fill: " + pathColor(d) + "; stroke: blue; opacity: 1.0;";
+var nodeStyleActive = function (d) {
+    return "fill: " + pathColor(d) + "; stroke: blue; opacity: 1.0;";
 };
 
 
-var lineStyle = function(d) { return "stroke:" + (d.type == 'ATE' ? "lightgreen" : "pink") + "; fill:none; opacity:0.1;"; };
-
-var lineStyleActive = function(d) { return "stroke:" + (d.type == 'ATE' ? "green" : "red") + "; fill:none; opacity:0.9;"; };
-
-
-var activateTaxonNodesAndLinks = function(svg, d, interactionDirection) {
-	svg.selectAll("." + interactionDirection.start + "." + classnameForNode(d))
-		.attr("style", nodeStyleActive);
-	svg.selectAll(".link." + interactionDirection.start + "-" + classnameForNode(d))
-		.attr("style", lineStyleActive);
-
-	var linkArray = svg.selectAll(".link." + interactionDirection.start + "-" + classnameForNode(d)).data();
-	
-	var targetNames = '';
-	if (linkArray.length > 1) {
-		targetNames = linkArray[0][interactionDirection.finish].name;
-	}
-	for (var i=1; i < linkArray.length; i++) {
-		targetNames += ", ";
-		targetNames += linkArray[i][interactionDirection.finish].name;
-	}
-
-	d3.selectAll("#" + interactionDirection.finish + "-names").append("span").text(targetNames);
-	d3.selectAll("#" + interactionDirection.start + "-names").append("span").text(d.name);
+var lineStyle = function (d) {
+    return "stroke:" + (d.type == 'ATE' ? "lightgreen" : "pink") + "; fill:none; opacity:0.1;";
 };
 
-var addSourceTaxonNodes = function(svg, nodeArray) {
-	svg.selectAll('.source')
-	.data(nodeArray)
-	.enter()
-	.append("circle")
-	.attr("class", function(d) { return "source " + classnameForNode(d); })
-	.attr("style", nodeStyle)
-	.attr("cx", function(d) { return d.x; })
-	.attr("cy", function(d) { return d.y; })
-	.attr("r", function(d) { return d.radius; })
-	.on("mouseover", function(d) { 
-		activateTaxonNodesAndLinks(svg, d, {"start":"source","finish":"target"});
-		return d.name; 
-	})
-	.on("mouseout", function(d) { 
-		svg.selectAll(".source." + classnameForNode(d)).attr("style", nodeStyle);
-		svg.selectAll(".link.source-" + classnameForNode(d)).attr("style", lineStyle);
-		d3.selectAll("#source-taxon").selectAll("span").remove();
-		d3.selectAll("#source-names").selectAll("span").remove();	
-		d3.selectAll("#target-names").selectAll("span").remove();	
-		return d.name; 
-	});	
+var lineStyleActive = function (d) {
+    return "stroke:" + (d.type == 'ATE' ? "green" : "red") + "; fill:none; opacity:0.9;";
 };
 
-var addTargetTaxonNodes = function(svg, nodeArray, colorMap, height) {
-	svg.selectAll('.target')
-	.data(nodeArray)
-	.enter()
-	.append("circle")
-	.attr("class", function(d) { return "target " + classnameForNode(d); })
-	.attr("style", nodeStyle)
-	.attr("cx", function(d) { return d.x; })
-	.attr("cy", function(d) {return d.y + height * 0.81; })
-	.attr("r", function(d) { return d.radius; })
-	.on("mouseover", function(d) { 
-		activateTaxonNodesAndLinks(svg, d, {"start":"target","finish":"source"});
-		return d.name; 
-	})
-	.on("mouseout", function(d) { 
-		svg.selectAll(".target." + classnameForNode(d)).attr("style", nodeStyle);
-		svg.selectAll(".link.target-" + classnameForNode(d)).attr("style", lineStyle);
-		d3.selectAll("#target-taxon").selectAll("span").remove();
-		d3.selectAll("#target-names").selectAll("span").remove();	
-		d3.selectAll("#source-names").selectAll("span").remove();	
-		return d.name; 
-	});
+
+var activateTaxonNodesAndLinks = function (svg, d, interactionDirection) {
+    svg.selectAll("." + interactionDirection.start + "." + classnameForNode(d))
+        .attr("style", nodeStyleActive);
+    svg.selectAll(".link." + interactionDirection.start + "-" + classnameForNode(d))
+        .attr("style", lineStyleActive);
+
+    var linkArray = svg.selectAll(".link." + interactionDirection.start + "-" + classnameForNode(d)).data();
+
+    var targetNames = '';
+    if (linkArray.length > 1) {
+        targetNames = linkArray[0][interactionDirection.finish].name;
+    }
+    for (var i = 1; i < linkArray.length; i++) {
+        targetNames += ", ";
+        targetNames += linkArray[i][interactionDirection.finish].name;
+    }
+
+    d3.selectAll("#" + interactionDirection.finish + "-names").append("span").text(targetNames);
+    d3.selectAll("#" + interactionDirection.start + "-names").append("span").text(d.name);
 };
 
-var addInteraction = function(svg, interactionArray) {
-	svg.selectAll(".link")
-	.data(interactionArray)
-	.enter()
-	.append("path")
-	.attr("class", function(d) { 
-		return "link " + "source-" + classnameForNode(d.source) + " target-" + classnameForNode(d.target);
-	} )
-	.attr("style", lineStyle)
-	.attr('d', function(d) { return "M" + d.source.x + " " + d.source.y + " Q" + d.source.x + " " + d.source.y  + " " + d.target.x + " " + d.target.y + 0.1; } );
+var addSourceTaxonNodes = function (svg, nodeArray) {
+    svg.selectAll('.source')
+        .data(nodeArray)
+        .enter()
+        .append("circle")
+        .attr("class", function (d) {
+            return "source " + classnameForNode(d);
+        })
+        .attr("style", nodeStyle)
+        .attr("cx", function (d) {
+            return d.x;
+        })
+        .attr("cy", function (d) {
+            return d.y;
+        })
+        .attr("r", function (d) {
+            return d.radius;
+        })
+        .on("mouseover", function (d) {
+            activateTaxonNodesAndLinks(svg, d, {"start": "source", "finish": "target"});
+            return d.name;
+        })
+        .on("mouseout", function (d) {
+            svg.selectAll(".source." + classnameForNode(d)).attr("style", nodeStyle);
+            svg.selectAll(".link.source-" + classnameForNode(d)).attr("style", lineStyle);
+            d3.selectAll("#source-taxon").selectAll("span").remove();
+            d3.selectAll("#source-names").selectAll("span").remove();
+            d3.selectAll("#target-names").selectAll("span").remove();
+            return d.name;
+        });
+};
+
+var addTargetTaxonNodes = function (svg, nodeArray, colorMap, height) {
+    svg.selectAll('.target')
+        .data(nodeArray)
+        .enter()
+        .append("circle")
+        .attr("class", function (d) {
+            return "target " + classnameForNode(d);
+        })
+        .attr("style", nodeStyle)
+        .attr("cx", function (d) {
+            return d.x;
+        })
+        .attr("cy", function (d) {
+            return d.y + height * 0.81;
+        })
+        .attr("r", function (d) {
+            return d.radius;
+        })
+        .on("mouseover", function (d) {
+            activateTaxonNodesAndLinks(svg, d, {"start": "target", "finish": "source"});
+            return d.name;
+        })
+        .on("mouseout", function (d) {
+            svg.selectAll(".target." + classnameForNode(d)).attr("style", nodeStyle);
+            svg.selectAll(".link.target-" + classnameForNode(d)).attr("style", lineStyle);
+            d3.selectAll("#target-taxon").selectAll("span").remove();
+            d3.selectAll("#target-names").selectAll("span").remove();
+            d3.selectAll("#source-names").selectAll("span").remove();
+            return d.name;
+        });
+};
+
+var addInteraction = function (svg, interactionArray) {
+    svg.selectAll(".link")
+        .data(interactionArray)
+        .enter()
+        .append("path")
+        .attr("class", function (d) {
+            return "link " + "source-" + classnameForNode(d.source) + " target-" + classnameForNode(d.target);
+        })
+        .attr("style", lineStyle)
+        .attr('d', function (d) {
+            return "M" + d.source.x + " " + d.source.y + " Q" + d.source.x + " " + d.source.y + " " + d.target.x + " " + d.target.y + 0.1;
+        });
 };
 
 
 // subtrack encapsulate parameters
-globi.addInteractionGraph = function(location, ids, width, height) {
-	var svg = d3.select("#" + ids.graphId).append("svg")
-	.attr("width", width)
-	.attr("height", height);
+globi.addInteractionGraph = function (location, ids, width, height) {
+    var svg = d3.select("#" + ids.graphId).append("svg")
+        .attr("width", width)
+        .attr("height", height);
 
-	var colorMap = taxonColorMap();
+    addLegend(ids.legendId, taxonColorMap, width, height);
 
-	addLegend(ids.legendId, colorMap, width, height);
 
-	
-	var json_local = false;
-	var json_resource = json_local ? "interactions.json" : "http://trophicgraph.com:8080/interaction?type=json.v2&" + locationQuery(location);
+    var json_local = false;
+    var json_resource = json_local ? "interactions.json" : "http://trophicgraph.com:8080/interaction?type=json.v2&" + locationQuery(location);
 
-	d3.json(json_resource, function(error, response) {
-		if (!error) {
+    d3.json(json_resource, function (error, response) {
+        if (!error) {
 
-			var interactions = {};
-			var nodes = {};
+            var interactions = {};
+            var nodes = {};
 
-			parse(response, interactions, nodes);
+            parse(response, interactions, nodes);
 
-			var nodeKeys = [];
+            var nodeKeys = [];
 
-			var number_of_nodes = 0;
-			for (var node_key in nodes) {
-				number_of_nodes++; 
-				nodeKeys.push(node_key);
-			}
+            var number_of_nodes = 0;
+            for (var node_key in nodes) {
+                number_of_nodes++;
+                nodeKeys.push(node_key);
+            }
 
-			nodeKeys.sort();
+            nodeKeys.sort();
 
-			var i = 0;
+            var i = 0;
 
             var taxonNodes = [];
-			for (var nodeKey in nodeKeys) {
-				var key = nodeKeys[nodeKey];
-				var widthPerNode = width / (number_of_nodes + 1);
-				nodes[key].x = widthPerNode + i * widthPerNode;
-				nodes[key].y = 45;
-				nodes[key].radius = widthPerNode;
-				nodes[key].color = "pink";
+            for (var nodeKey in nodeKeys) {
+                var key = nodeKeys[nodeKey];
+                var widthPerNode = width / (number_of_nodes + 1);
+                nodes[key].x = widthPerNode + i * widthPerNode;
+                nodes[key].y = 45;
+                nodes[key].radius = widthPerNode;
+                nodes[key].color = "pink";
                 taxonNodes.push(nodes[key]);
-				i = i + 1;
-			}
+                i = i + 1;
+            }
 
-			var interactionsArray = [];
-			for (var key in interactions) {
-				interactions[key].source = nodes[indexForNode(interactions[key].source)];
-				interactions[key].target = nodes[indexForNode(interactions[key].target)];
-				interactionsArray.push(interactions[key]);
-			}
+            var interactionsArray = [];
+            for (var key in interactions) {
+                interactions[key].source = nodes[indexForNode(interactions[key].source)];
+                interactions[key].target = nodes[indexForNode(interactions[key].target)];
+                interactionsArray.push(interactions[key]);
+            }
 
-			addSourceTaxonNodes(svg, taxonNodes);
-			addTargetTaxonNodes(svg, taxonNodes, colorMap, height);
-			addInteraction(svg, interactionsArray);
-		}
-	});
+            addSourceTaxonNodes(svg, taxonNodes);
+            addTargetTaxonNodes(svg, taxonNodes, taxonColorMap, height);
+            addInteraction(svg, interactionsArray);
+        }
+    });
 };
 
 module.exports = globi;
