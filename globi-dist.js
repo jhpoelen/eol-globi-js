@@ -5,16 +5,43 @@ var d3 = require("d3");
 var globi = {};
 globi.d3 = d3;
 
-var url_prefix = "http://trophicgraph.com:8080";
+var urlPrefix = "http://trophicgraph.com:8080";
 
-globi.add_taxon_info = function(scientific_name, div_id, on_click_scientific_name_callback) {
-	img_callback = function(error, json) {
+// comments from code workshop 1 Aug 2013
+// Bemson - separate data from visualize
+// substack - bin-fields to use app /utils
+// Ryan - callback too specific, div_id -> id
+// matt - document function with comments
+// bemson - colorMap function -> use object dynamic rather than assocation
+// jack - introduce auto-complete, provide feedbackafter submit a search, fuzzy search
+// ryan - top 5 searches
+// bemson - drop-down
+// matt - provide example in readme.md 
+// ryan - test
+// substack - populate full data in server replies to reduce round trips
+// Substack/sorta - good example of dynamically insert, let consumer attach content whenever they want
+// Ryan/ Bemsom - encapsulate, pass in functions
+var urlForTaxonInteractionQuery = function (sourceTaxonScientificName, interactionType, targetTaxonScientificName) {
+	var uri = urlPrefix + "/taxon/" + encodeURIComponent(sourceTaxonScientificName) + "/" + interactionType;
+	if (targetTaxonScientificName) {
+		uri = uri + "/" + targetTaxonScientificName;
+	}
+	return uri + '?type=json.v2';
+};
+
+var urlForTaxonImageQuery = function(taxonName) {
+	return urlPrefix + "/imagesForName/" + encodeURIComponent(taxonName);
+};
+
+
+globi.addTaxonInfo = function(scientificName, id, onClickScientificCallback) {
+	var imageCallback = function(error, json) {
 		if (!error) {
 			if (json.thumbnailURL) {
-				img_div = d3.select(div_id)
+				var imgId = d3.select(id)
 				.append("span")
 
-				var table = img_div.append("table");
+				var table = imgId.append("table");
 
 				
 				if (json.commonName && json.scientificName && json.infoURL) {
@@ -22,10 +49,10 @@ globi.add_taxon_info = function(scientific_name, div_id, on_click_scientific_nam
 					.append("img")
 					.attr("src", json.thumbnailURL);	
 
-					if (on_click_scientific_name_callback) {
+					if (onClickScientificCallback) {
 						img
 						.on("click", function(d) {
-							on_click_scientific_name_callback(json.scientificName);
+							onClickScientificCallback(json.scientificName);
 						});
 					}
 
@@ -36,204 +63,190 @@ globi.add_taxon_info = function(scientific_name, div_id, on_click_scientific_nam
 					.attr("target", "_blank")
 					.text(" >");
 					
-
-					var scientific_name_td = table.append("tr").append("td")
-					scientific_name_td.html("<i>" + json.scientificName + "</i>");
+					var scientificNameCell = table.append("tr").append("td");
+					scientificNameCell.html("<i>" + json.scientificName + "</i>");
 				}	
 			} 
 		} 
 	};
-	d3.json(url_for_taxon_image_query(scientific_name), img_callback);
+	d3.json(urlForTaxonImageQuery(scientificName), imageCallback);
 };
 
-globi.url_for_taxon_interaction_query = function (source_taxon_name, interaction_type, target_taxon_name) {
-	var uri = url_prefix + "/taxon/" + encodeURIComponent(source_taxon_name) + "/" + interaction_type;
-	if (target_taxon_name) {
-		uri = uri + "/" + target_taxon_name;
-	}
-	return uri + '?type=json.v2';
-};
-
-globi.url_for_taxon_image_query = function(taxon_name) {
-	return url_prefix + "/imagesForName/" + encodeURIComponent(scientific_name);
-};
-
-globi.view_interactions = function(div_id, interaction_type, source_target_name, interaction_description, on_click_scientific_name_callback) {
-	var uri = url_for_taxon_interaction_query(source_target_name, interaction_type);
+globi.viewInteractions = function(id, interactionType, sourceTaxonScientificName, interactionDescription, onClickScientificName) {
+	var uri = urlForTaxonInteractionQuery(sourceTaxonScientificName, interactionType);
 
 	d3.json(uri, function(error, json) {
 		if (!error) {
-			var html_text = "<b>" + interaction_description + "</b>";
+			var htmlText = "<b>" + interactionDescription + "</b>";
 			if (json && json.length == 0) {
-				html_text += " <b> nothing</b>";
+				htmlText += " <b> nothing</b>";
 			}
-			d3.select(div_id).html(html_text);
+			d3.select(id).html(htmlText);
 
 			for (var i = 0; json && i < json.length; i++) {
-				globi.add_taxon_info(json[i].target.name, div_id, on_click_scientific_name_callback);
+				globi.addTaxonInfo(json[i].target.name, id, onClickScientificName);
 			};				
 		}
 	});
 };
 
-var matched_against_taxonomy = function(node) {
+var matchAgainstTaxonomy = function(node) {
 	return node.path && "no:match" != node.path;
 }
 
-var index_for_node = function(node) {
+var indexForNode = function(node) {
 	return node.path + "_" + node.name;
 };
 
-var classname_for_node = function(node) {
+var classnameForNode = function(node) {
 	return node.name.replace(' ', '_');
 };
 
 var parse = function(response, interactions, nodes) {
 	for (var i = response.length - 1; i >= 0; i--) {
 		var inter = response[i];
-		if (matched_against_taxonomy(inter.source) 
-			&& matched_against_taxonomy(inter.target)) {
-
+		if (matchAgainstTaxonomy(inter.source)
+			&& matchAgainstTaxonomy(inter.target)) {
 			var source = inter.source.name;
 
-		var source_index = index_for_node(inter.source);
-		nodes[source_index] = {"name": source, "id": inter.source.id, "path": inter.source.path};
+		var sourceIndex = indexForNode(inter.source);
+		nodes[sourceIndex] = {"name": source, "id": inter.source.id, "path": inter.source.path};
 
 		var target = inter.target.name;
-		var target_index = index_for_node(inter.target);
-		nodes[target_index]= {"name":target,"id":inter.target.id, "path":inter.target.path};
+		var targetIndex = indexForNode(inter.target);
+		nodes[targetIndex]= {"name":target,"id":inter.target.id, "path":inter.target.path};
 
 		var type = inter.interaction_type;
-		var interact_id = source + '-' + type + '-' + target;
-		interactions[interact_id] = {'source':nodes[source_index],'type':type,'target':nodes[target_index]};
+		var interactionIndex = source + '-' + type + '-' + target;
+		interactions[interactionIndex] = {'source':nodes[sourceIndex],'type':type,'target':nodes[targetIndex]};
 	}					
 }
 };
 
-var taxon_color_map = function() {
-	var color_map = [];
-	color_map['Arthropoda'] = 'red';
-	color_map['Mammalia'] = 'lightblue';
-	color_map['Aves'] = 'brown';
-	color_map['Actinopterygii'] = 'blue';
-	color_map['Arachnida'] = 'pink';
-	color_map['Mollusca'] = 'orange';
-	color_map['Plantae'] = 'green';
-	color_map['Amphibia'] = 'violet';
-	color_map['Reptilia'] = 'yellow';
-	color_map['Bacteria'] = 'magenta';
-	color_map['other'] = 'gray';
-	return color_map;
+var taxonColorMap = function() {
+	var colorMap = [];
+	colorMap['Arthropoda'] = 'red';
+	colorMap['Mammalia'] = 'lightblue';
+	colorMap['Aves'] = 'brown';
+	colorMap['Actinopterygii'] = 'blue';
+	colorMap['Arachnida'] = 'pink';
+	colorMap['Mollusca'] = 'orange';
+	colorMap['Plantae'] = 'green';
+	colorMap['Amphibia'] = 'violet';
+	colorMap['Reptilia'] = 'yellow';
+	colorMap['Bacteria'] = 'magenta';
+	colorMap['other'] = 'gray';
+	return colorMap;
 };
 
-var add_legend = function(legend_id, color_map, width, height) {
-	var taxon_rank_colors = [];
+var addLegend = function(id, colorMap, width, height) {
+	var taxonRankColors = [];
 	var i = 1;
-	for (var taxon_rank in color_map) {
-		taxon_rank_colors.push({"rank": taxon_rank, "color": color_map[taxon_rank], "id": i });
+	for (var taxon_rank in colorMap) {
+		taxonRankColors.push({"rank": taxon_rank, "color": colorMap[taxon_rank], "id": i });
 		i++;
 	}
 	
-	var legend = d3.select("#" + legend_id).append("svg")
+	var legend = d3.select("#" + id).append("svg")
 	.attr("width", width / 5)
 	.attr("height", height);
 
-	var radius = height / taxon_rank_colors.length / 4;
-	var y_offset = (height - 2 * radius * taxon_rank_colors.length) / taxon_rank_colors.length / 2;
-	var x_offset = width / 20;
+	var radius = height / taxonRankColors.length / 4;
+	var yOffset = (height - 2 * radius * taxonRankColors.length) / taxonRankColors.length / 2;
+	var xOffset = width / 20;
 
 	legend.selectAll('circle')
-	.data(taxon_rank_colors)
+	.data(taxonRankColors)
 	.enter()
 	.append('circle')
 	.attr("style", function(d) { return "fill:" + d.color; })
-	.attr("cx", function(d) { return x_offset + radius; })
-	.attr("cy", function(d) { return height/50 + radius + d.id * (y_offset + (radius * 2)); })
+	.attr("cx", function(d) { return xOffset + radius; })
+	.attr("cy", function(d) { return height/50 + radius + d.id * (yOffset + (radius * 2)); })
 	.attr("r", function(d) { return radius; });
 
 	legend.selectAll('text')
-	.data(taxon_rank_colors)
+	.data(taxonRankColors)
 	.enter()
 	.append('text')
 	.text(function(d) { return d.rank; })
 	.style("font-size", function(d) { return height/30 + "px"; })
-	.attr("x", function(d) { return x_offset * 1.4 + radius; })
-	.attr("y", function(d) { return 1.2*height/50 + radius + d.id * (y_offset + (radius * 2)); });
+	.attr("x", function(d) { return xOffset * 1.4 + radius; })
+	.attr("y", function(d) { return 1.2*height/50 + radius + d.id * (yOffset + (radius * 2)); });
 
 }
 
-var location_query = function(location) {
-	var location_query = "";
-	for (elem in location) {
-		location_query += elem + "=" + location[elem] + "&";
+var locationQuery = function(location) {
+	var locationQuery = "";
+	for (var elem in location) {
+		locationQuery += elem + "=" + location[elem] + "&";
 	}
-	return location_query;
+	return locationQuery;
 }
 
-var path_color = function(d) {
-	color_map = taxon_color_map();
-	var color = color_map['other'];
-	for (var taxon_rank in color_map) {
-		if (d.path && d.path.contains(taxon_rank)) {
-			color = color_map[taxon_rank];
+var pathColor = function(d) {
+	colorMap = taxonColorMap();
+	var color = colorMap['other'];
+	for (var taxonRank in colorMap) {
+		if (d.path && d.path.contains(taxonRank)) {
+			color = colorMap[taxonRank];
 			break;
 		}	
 	}
 	return color;
 };
 
-var node_style = function(d) {
-	return "fill: " + path_color(d) + "; stroke: blue; opacity: 0.5;";
+var nodeStyle = function(d) {
+	return "fill: " + pathColor(d) + "; stroke: blue; opacity: 0.5;";
 };
 
-var node_style_active = function(d) {
-	return "fill: " + path_color(d) + "; stroke: blue; opacity: 1.0;";
+var nodeStyleActive = function(d) {
+	return "fill: " + pathColor(d) + "; stroke: blue; opacity: 1.0;";
 };
 
 
-var line_style = function(d) { return "stroke:" + (d.type == 'ATE' ? "lightgreen" : "pink") + "; fill:none; opacity:0.1;"; };
+var lineStyle = function(d) { return "stroke:" + (d.type == 'ATE' ? "lightgreen" : "pink") + "; fill:none; opacity:0.1;"; };
 
-var line_style_active = function(d) { return "stroke:" + (d.type == 'ATE' ? "green" : "red") + "; fill:none; opacity:0.9;"; };
+var lineStyleActive = function(d) { return "stroke:" + (d.type == 'ATE' ? "green" : "red") + "; fill:none; opacity:0.9;"; };
 
 
-var activate_taxa_and_links = function(svg, d, inter_dir) {
-	svg.selectAll("." + inter_dir.start + "." + classname_for_node(d))
-		.attr("style", node_style_active); 
-	svg.selectAll(".link." + inter_dir.start + "-" + classname_for_node(d))
-		.attr("style", line_style_active); 
+var activateTaxonNodesAndLinks = function(svg, d, interactionDirection) {
+	svg.selectAll("." + interactionDirection.start + "." + classnameForNode(d))
+		.attr("style", nodeStyleActive);
+	svg.selectAll(".link." + interactionDirection.start + "-" + classnameForNode(d))
+		.attr("style", lineStyleActive);
 
-	link_array = svg.selectAll(".link." + inter_dir.start + "-" + classname_for_node(d)).data();
+	var linkArray = svg.selectAll(".link." + interactionDirection.start + "-" + classnameForNode(d)).data();
 	
-	var target_names = '';
-	if (link_array.length > 1) {
-		target_names = link_array[0][inter_dir.finish].name;
+	var targetNames = '';
+	if (linkArray.length > 1) {
+		targetNames = linkArray[0][interactionDirection.finish].name;
 	}
-	for (i=1; i < link_array.length; i++) {
-		target_names += ", ";
-		target_names += link_array[i][inter_dir.finish].name;
+	for (var i=1; i < linkArray.length; i++) {
+		targetNames += ", ";
+		targetNames += linkArray[i][interactionDirection.finish].name;
 	}
 
-	d3.selectAll("#" + inter_dir.finish + "-names").append("span").text(target_names);
-	d3.selectAll("#" + inter_dir.start + "-names").append("span").text(d.name);	
+	d3.selectAll("#" + interactionDirection.finish + "-names").append("span").text(targetNames);
+	d3.selectAll("#" + interactionDirection.start + "-names").append("span").text(d.name);
 };
 
-var add_source_taxa = function(svg, node_array, color_map) {
-	var source_circle = svg.selectAll('.source')
-	.data(node_array)
+var addSourceTaxonNodes = function(svg, nodeArray) {
+	svg.selectAll('.source')
+	.data(nodeArray)
 	.enter()
 	.append("circle")
-	.attr("class", function(d) { return "source " + classname_for_node(d); })
-	.attr("style", node_style)
+	.attr("class", function(d) { return "source " + classnameForNode(d); })
+	.attr("style", nodeStyle)
 	.attr("cx", function(d) { return d.x; })
 	.attr("cy", function(d) { return d.y; })
 	.attr("r", function(d) { return d.radius; })
 	.on("mouseover", function(d) { 
-		activate_taxa_and_links(svg, d, {"start":"source","finish":"target"});
+		activateTaxonNodesAndLinks(svg, d, {"start":"source","finish":"target"});
 		return d.name; 
 	})
 	.on("mouseout", function(d) { 
-		svg.selectAll(".source." + classname_for_node(d)).attr("style", node_style); 
-		svg.selectAll(".link.source-" + classname_for_node(d)).attr("style", line_style); 
+		svg.selectAll(".source." + classnameForNode(d)).attr("style", nodeStyle);
+		svg.selectAll(".link.source-" + classnameForNode(d)).attr("style", lineStyle);
 		d3.selectAll("#source-taxon").selectAll("span").remove();
 		d3.selectAll("#source-names").selectAll("span").remove();	
 		d3.selectAll("#target-names").selectAll("span").remove();	
@@ -241,23 +254,23 @@ var add_source_taxa = function(svg, node_array, color_map) {
 	});	
 };
 
-var add_target_taxa = function(svg, node_array, color_map, height) {
-	var target_circle = svg.selectAll('.target')
-	.data(node_array)
+var addTargetTaxonNodes = function(svg, nodeArray, colorMap, height) {
+	svg.selectAll('.target')
+	.data(nodeArray)
 	.enter()
 	.append("circle")
-	.attr("class", function(d) { return "target " + classname_for_node(d); })
-	.attr("style", node_style)
+	.attr("class", function(d) { return "target " + classnameForNode(d); })
+	.attr("style", nodeStyle)
 	.attr("cx", function(d) { return d.x; })
 	.attr("cy", function(d) {return d.y + height * 0.81; })
 	.attr("r", function(d) { return d.radius; })
 	.on("mouseover", function(d) { 
-		activate_taxa_and_links(svg, d, {"start":"target","finish":"source"});
+		activateTaxonNodesAndLinks(svg, d, {"start":"target","finish":"source"});
 		return d.name; 
 	})
 	.on("mouseout", function(d) { 
-		svg.selectAll(".target." + classname_for_node(d)).attr("style", node_style); 
-		svg.selectAll(".link.target-" + classname_for_node(d)).attr("style", line_style); 
+		svg.selectAll(".target." + classnameForNode(d)).attr("style", nodeStyle);
+		svg.selectAll(".link.target-" + classnameForNode(d)).attr("style", lineStyle);
 		d3.selectAll("#target-taxon").selectAll("span").remove();
 		d3.selectAll("#target-names").selectAll("span").remove();	
 		d3.selectAll("#source-names").selectAll("span").remove();	
@@ -265,31 +278,32 @@ var add_target_taxa = function(svg, node_array, color_map, height) {
 	});
 };
 
-var add_interactions = function(svg, interactions_array) {
+var addInteraction = function(svg, interactionArray) {
 	svg.selectAll(".link")
-	.data(interactions_array)
+	.data(interactionArray)
 	.enter()
 	.append("path")
 	.attr("class", function(d) { 
-		return "link " + "source-" + classname_for_node(d.source) + " target-" + classname_for_node(d.target); 
+		return "link " + "source-" + classnameForNode(d.source) + " target-" + classnameForNode(d.target);
 	} )
-	.attr("style", line_style)
+	.attr("style", lineStyle)
 	.attr('d', function(d) { return "M" + d.source.x + " " + d.source.y + " Q" + d.source.x + " " + d.source.y  + " " + d.target.x + " " + d.target.y + 0.1; } );
 };
 
 
-globi.add_interaction_graph = function(location, div_ids, width, height) {
-	var svg = d3.select("#" + div_ids.graph_id).append("svg")
+// subtrack encapsulate parameters
+globi.addInteractionGraph = function(location, ids, width, height) {
+	var svg = d3.select("#" + ids.graphId).append("svg")
 	.attr("width", width)
 	.attr("height", height);
 
-	var color_map = taxon_color_map();
+	var colorMap = taxonColorMap();
 
-	add_legend(div_ids.legend_id, color_map, width, height);
+	addLegend(ids.legendId, colorMap, width, height);
 
 	
 	var json_local = false;
-	var json_resource = json_local ? "interactions.json" : "http://trophicgraph.com:8080/interaction?type=json.v2&" + location_query(location);
+	var json_resource = json_local ? "interactions.json" : "http://trophicgraph.com:8080/interaction?type=json.v2&" + locationQuery(location);
 
 	d3.json(json_resource, function(error, response) {
 		if (!error) {
@@ -299,40 +313,40 @@ globi.add_interaction_graph = function(location, div_ids, width, height) {
 
 			parse(response, interactions, nodes);
 
-			var node_array = [];
-
-			var node_keys = [];
+			var nodeKeys = [];
 
 			var number_of_nodes = 0;
 			for (var node_key in nodes) {
 				number_of_nodes++; 
-				node_keys.push(node_key);
+				nodeKeys.push(node_key);
 			}
 
-			node_keys.sort();
+			nodeKeys.sort();
 
 			var i = 0;
-			for (var node_key in node_keys) {
-				var key = node_keys[node_key];
-				width_per_node = width / (number_of_nodes + 1);
-				nodes[key].x = width_per_node + i * width_per_node;
+
+            var taxonNodes = [];
+			for (var nodeKey in nodeKeys) {
+				var key = nodeKeys[nodeKey];
+				var widthPerNode = width / (number_of_nodes + 1);
+				nodes[key].x = widthPerNode + i * widthPerNode;
 				nodes[key].y = 45;
-				nodes[key].radius = width_per_node;
+				nodes[key].radius = widthPerNode;
 				nodes[key].color = "pink";
-				node_array.push(nodes[key]);
+                taxonNodes.push(nodes[key]);
 				i = i + 1;
 			}
 
-			interactions_array = [];
+			var interactionsArray = [];
 			for (var key in interactions) {
-				interactions[key].source = nodes[index_for_node(interactions[key].source)];
-				interactions[key].target = nodes[index_for_node(interactions[key].target)];
-				interactions_array.push(interactions[key]);
+				interactions[key].source = nodes[indexForNode(interactions[key].source)];
+				interactions[key].target = nodes[indexForNode(interactions[key].target)];
+				interactionsArray.push(interactions[key]);
 			}
 
-			add_source_taxa(svg, node_array, color_map);
-			add_target_taxa(svg, node_array, color_map, height);
-			add_interactions(svg, interactions_array);
+			addSourceTaxonNodes(svg, taxonNodes);
+			addTargetTaxonNodes(svg, taxonNodes, colorMap, height);
+			addInteraction(svg, interactionsArray);
 		}
 	});
 };

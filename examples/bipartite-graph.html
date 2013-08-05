@@ -3,16 +3,6 @@
 <head>
 	<meta charset="utf-8">
 	<style type="text/css">
-	.taxon_img {
-		position: absolute; top: 0; left: 0; opacity: 1.0;
-	}
-	.taxon_name {
-		position: absolute; top: 0; left: 0; opacity: 0.8;
-	}
-	.taxon_img_div {
-		position: relative;
-	}
-
 	table {
 		display: inline-table;
 	}
@@ -21,27 +11,17 @@
 		text-align: center;
 	}
 
-	.source {
-		stroke: #006600;
-		fill:   #00cc00;
-	}
-
-	.link {
-		stroke: black;
-		fill:   #00cc00;
-	}
-
-	</style>
+</style>
 	<script src="../globi-dist.js" charset="utf-8"></script>
 	<script type="text/javascript" charset="utf-8">	
 
 	window.onload = function() {
 		// default location is in/near Costa Rica
 		var location ={ "nw_lat": 18.25, "nw_lng": -66.50, "se_lat": 18.24, "se_lng": -66.49};
-		var div_ids = {"graph_id":"interaction_graph", "legend_id":"interaction_graph_legend"};
+		var ids = {"graphId":"interaction_graph", "legendId":"interaction_graph_legend"};
 		var width = 1000;
 		var height = 500;
-		globi.add_interaction_graph(location, div_ids, width, height);
+		globi.addInteractionGraph(location, ids, width, height);
 	};
 
 	</script>

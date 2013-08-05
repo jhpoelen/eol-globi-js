@@ -28,24 +28,24 @@
 	var d3 = globi.d3;
 
 	window.onload = function() {
-		reload_view();
+		reloadView();
 	};
 
-	function on_click_scientific_name(scientific_name) {
+	function onClickScientificName(scientific_name) {
 		d3.select("#select_taxon_name").attr("value", scientific_name);
-		reload_view();
+		reloadView();
 	}
 
-	function load_view(taxon_name) {
+	function loadView(taxonScientificName) {
 		d3.selectAll(".globi").selectAll("span").remove();
-		globi.add_taxon_info(taxon_name, "#globi-target-taxon", on_click_scientific_name);
-		globi.add_taxon_info(taxon_name, "#globi-source-taxon", on_click_scientific_name);
-		globi.view_interactions("#globi-prey", "preysOn", taxon_name, " eats ", on_click_scientific_name);
-		globi.view_interactions("#globi-predator", "preyedUponBy", taxon_name, " eaten by ", on_click_scientific_name);
+		globi.addTaxonInfo(taxonScientificName, "#globi-target-taxon", onClickScientificName);
+		globi.addTaxonInfo(taxonScientificName, "#globi-source-taxon", onClickScientificName);
+		globi.viewInteractions("#globi-prey", "preysOn", taxonScientificName, " eats ", onClickScientificName);
+		globi.viewInteractions("#globi-predator", "preyedUponBy", taxonScientificName, " eaten by ", onClickScientificName);
 	}
 
-	function reload_view() {
-		load_view(d3.select("#select_taxon_name").attr("value"));
+	function reloadView() {
+		loadView(d3.select("#select_taxon_name").attr("value"));
 		return false;
 	}
 
@@ -54,7 +54,7 @@
 <body>
 	<p>Welcome to GloBI's Proof of Concept Species Interaction Explorer.</p>
 	<p>Please enter scientific name below or click on images to view more species interactions.</p>
-  	<input type="text" id="select_taxon_name" value="Callinectes sapidus" autocomplete="off" onBlur="load_view(this.value);"/>
+  	<input type="text" id="select_taxon_name" value="Callinectes sapidus" autocomplete="off" onBlur="loadView(this.value);"/>
   	<input type="button" value="search"/>
  	
  	<br/>
