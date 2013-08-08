@@ -125,7 +125,7 @@ var addLegend = function (id, colorMap, width, height) {
     var taxonRankColors = [];
     var i = 1;
     for (var taxon_rank in colorMap) {
-        if ( colorMap.hasOwnProperty( taxon ) ) {
+        if ( colorMap.hasOwnProperty( taxon_rank ) ) {
             taxonRankColors.push({"rank": taxon_rank, "color": colorMap[taxon_rank], "id": i });
             i++;
         }
