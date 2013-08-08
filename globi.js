@@ -125,8 +125,10 @@ var addLegend = function (id, colorMap, width, height) {
     var taxonRankColors = [];
     var i = 1;
     for (var taxon_rank in colorMap) {
-        taxonRankColors.push({"rank": taxon_rank, "color": colorMap[taxon_rank], "id": i });
-        i++;
+        if ( colorMap.hasOwnProperty( taxon ) ) {
+            taxonRankColors.push({"rank": taxon_rank, "color": colorMap[taxon_rank], "id": i });
+            i++;
+        }
     }
 
     var legend = d3.select("#" + id).append("svg")
@@ -176,9 +178,11 @@ var addLegend = function (id, colorMap, width, height) {
 var pathColor = function (d) {
     var color = taxonColorMap['other'];
     for (var taxonRank in taxonColorMap) {
-        if (d.path && d.path.contains(taxonRank)) {
-            color = taxonColorMap[taxonRank];
-            break;
+        if ( taxonColorMap.hasOwnProperty( taxonRank ) ) {
+            if (d.path && d.path.contains(taxonRank)) {
+                color = taxonColorMap[taxonRank];
+                break;
+            }
         }
     }
     return color;
