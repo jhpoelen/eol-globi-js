@@ -60,7 +60,7 @@ globi.addTaxonInfo = function (scientificName, id, onClickScientificCallback) {
 globi.viewInteractions = function (id, interactionType, sourceTaxonScientificName, interactionDescription, onClickScientificName) {
 
 
-    var renderInteractions =  function (error, json) {
+    var renderInteractions = function (error, json) {
         if (!error) {
             var htmlText = "<b>" + interactionDescription + "</b>";
             if (json && json.length == 0) {
@@ -73,7 +73,7 @@ globi.viewInteractions = function (id, interactionType, sourceTaxonScientificNam
             }
         }
     };
-    var search = {"sourceTaxonScientificName": sourceTaxonScientificName, "interactionType":interactionType};
+    var search = {"sourceTaxonScientificName": sourceTaxonScientificName, "interactionType": interactionType};
     globiData.findSpeciesInteractions(search, renderInteractions);
 };
 
@@ -127,7 +127,7 @@ var addLegend = function (id, colorMap, width, height) {
     var taxonRankColors = [];
     var i = 1;
     for (var taxon_rank in colorMap) {
-        if ( colorMap.hasOwnProperty( taxon_rank ) ) {
+        if (colorMap.hasOwnProperty(taxon_rank)) {
             taxonRankColors.push({"rank": taxon_rank, "color": colorMap[taxon_rank], "id": i });
             i++;
         }
@@ -180,8 +180,8 @@ var addLegend = function (id, colorMap, width, height) {
 var pathColor = function (d) {
     var color = taxonColorMap['other'];
     for (var taxonRank in taxonColorMap) {
-        if ( taxonColorMap.hasOwnProperty( taxonRank ) ) {
-            if (d.path && d.path.contains(taxonRank)) {
+        if (taxonColorMap.hasOwnProperty(taxonRank)) {
+            if (d.path && d.path.match(taxonRank)) {
                 color = taxonColorMap[taxonRank];
                 break;
             }
