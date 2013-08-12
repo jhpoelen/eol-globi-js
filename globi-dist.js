@@ -242,7 +242,7 @@ var addSourceTaxonNodes = function (svg, nodeArray) {
             return d.x;
         })
         .attr("cy", function (d) {
-            return d.y;
+            return d.y1;
         })
         .attr("r", function (d) {
             return d.radius;
@@ -261,7 +261,7 @@ var addSourceTaxonNodes = function (svg, nodeArray) {
         });
 };
 
-var addTargetTaxonNodes = function (svg, nodeArray, colorMap, height) {
+var addTargetTaxonNodes = function (svg, nodeArray, colorMap) {
     svg.selectAll('.target')
         .data(nodeArray)
         .enter()
@@ -274,7 +274,7 @@ var addTargetTaxonNodes = function (svg, nodeArray, colorMap, height) {
             return d.x;
         })
         .attr("cy", function (d) {
-            return d.y + height * 0.81;
+            return d.y2;
         })
         .attr("r", function (d) {
             return d.radius;
@@ -303,7 +303,7 @@ var addInteraction = function (svg, interactionArray) {
         })
         .attr("style", lineStyle)
         .attr('d', function (d) {
-            return "M" + d.source.x + " " + d.source.y + " Q" + d.source.x + " " + d.source.y + " " + d.target.x + " " + d.target.y + 0.1;
+            return "M" + d.source.x + " " + d.source.y1 + " L" + d.target.x + " " + d.target.y2;
         });
 };
 
@@ -340,7 +340,12 @@ globi.addInteractionGraph = function (location, ids, width, height) {
                 var key = nodeKeys[nodeKey];
                 var widthPerNode = width / (number_of_nodes + 1);
                 nodes[key].x = widthPerNode + i * widthPerNode;
-                nodes[key].y = 45;
+                /**
+                 * @gb: Added a second ordinate to fix y-scale problem
+                 * * Additionally this speeds up rendering because we don't need Bezier ploting in #addIteraction anymore
+                 */
+                nodes[key].y1 = widthPerNode;
+                nodes[key].y2 = height - widthPerNode;
                 nodes[key].radius = widthPerNode;
                 nodes[key].color = "pink";
                 taxonNodes.push(nodes[key]);
@@ -355,7 +360,7 @@ globi.addInteractionGraph = function (location, ids, width, height) {
             }
 
             addSourceTaxonNodes(svg, taxonNodes);
-            addTargetTaxonNodes(svg, taxonNodes, taxonColorMap, height);
+            addTargetTaxonNodes(svg, taxonNodes, taxonColorMap);
             addInteraction(svg, interactionsArray);
         }
     };
