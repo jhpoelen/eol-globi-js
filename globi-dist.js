@@ -214,7 +214,7 @@ var activateTaxonNodesAndLinks = function (svg, d, interactionDirection, ee) {
         .attr('style', lineStyleActive);
 
     var interactions = svg.selectAll('.link.' + interactionDirection.start + '-' + classnameForNode(d)).data();
-    ee.emit('selected', interactions);
+    ee.emit('select', interactions);
 };
 
 var addSourceTaxonNodes = function (svg, nodeArray, ee) {
@@ -245,6 +245,7 @@ var addSourceTaxonNodes = function (svg, nodeArray, ee) {
             d3.selectAll('#source-taxon').selectAll('span').remove();
             d3.selectAll('#source-names').selectAll('span').remove();
             d3.selectAll('#target-names').selectAll('span').remove();
+            ee.emit('deselect');
             return d.name;
         });
 };
@@ -277,6 +278,7 @@ var addTargetTaxonNodes = function (svg, nodeArray, ee) {
             d3.selectAll('#target-taxon').selectAll('span').remove();
             d3.selectAll('#target-names').selectAll('span').remove();
             d3.selectAll('#source-names').selectAll('span').remove();
+            ee.emit('deselect');
             return d.name;
         });
 };

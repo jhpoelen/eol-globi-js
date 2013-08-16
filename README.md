@@ -5,15 +5,31 @@ eol-globi-js
 
 #Why?
 
-Javascript library for embedding [EOL's Global Biotic Interactions Data](http://github.com/jhpoelen/eol-globi-data/) (or species interaction data) in webpages like eol or iNaturalist.  This library helps display answers to questions like: Which species eat rats _(Rattus rattus)_? -or What does a human _(Homo sapiens)_ eat?
+Species interaction data tells us a lot about how organisms interact within an ecosystem.
+
+```eol-globi-js``` contains a javascript api to embed species interactions visualizations in web pages using [EOL's Global Biotic Interactions Data](http://github.com/jhpoelen/eol-globi-data/) (or species interaction data). This library helps display answers to questions like: Which species eat rats _(Rattus rattus)_? -or What does a human _(Homo sapiens)_ eat?
+
+The goal of this is to give you (yes you!) easy access to species interaction data and inspire other meaningful uses of the rich data sets that are readily available.
+
+If you are interested in building your own visualization based on interaction data, you might want to:
+
+1. checkout the examples in the  [```examples/```](examples/) directory, and/or,
+
+2. improve this library by becoming a contributor to this project, and/or,
+
+3. use the [GloBI REST](http://github.com/jhpoelen/eol-globi-data/wiki/rest] services directly, and/or
+
+4. use the [eol-globi-data-js](http://github.com/jhpoelen/globi-data-js) to access data using a javascript library.
+
 
 # Getting Started
 
-This library is using d3 to render svg widgets based on interaction data.  Curern
+This library is using [d3](http://d3js.org) to render svg widgets based on [GloBI](http://github.com/jhpoelen/eol-globi-data) species interaction data.
 
-Here's an example on how to render the interaction graph widget.  Notice the ```../globi-dist.js``` script tag.
+Below is an example snippet on how to render the interaction graph widget.  You can find the full example in (bipartite-graph.html)[examples/bipartite-graph.html].
 
 ```javascript
+        ...
         <script src="../globi-dist.js" charset="utf-8"></script>
         <script type="text/javascript" charset="utf-8">
 
@@ -57,6 +73,10 @@ Here's an example on how to render the interaction graph widget.  Notice the ```
 If you'd like the standalone version (including d3), please use globi-dist.js.
 
 # Running Tests
-To test, run ```node test/test.js```
+To test, run ```testling``` in the root directory of this project.
 
+# NPM (node package manager) module
+This library is published as the npm module (`globi`)[https://npmjs.org/package/globi] and depends on (```globi-data```)[https://npmjs.org/package/globi-data].
 
+# Feedback
+ Feedback is much appreciated! Please open a (new issue)[http://github.com/jhpoelen/eol-globi-js/issues/new] to share you ideas or . . . become a contributor . . .

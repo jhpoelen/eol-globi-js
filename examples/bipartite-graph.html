@@ -29,21 +29,21 @@
             });
 
             // specific interactions have been selected by user
-            ee.on('selected', function (interactions) {
-                // remove previous interaction text
-                globi.d3.selectAll('#selected-interactions').selectAll('div').remove();
-
-                // add new interaction text
-                var divs = globi.d3.selectAll('#selected-interactions').selectAll('div')
-                        .data(interactions);
-
-                divs.enter()
-                        .append('div')
-                        .text(function (d) {
-                            return  '[' + d.source.name + ' (' + d.source.id + ')]-[:'
+            ee.on('select', function (interactions) {
+                // use d3 to render interaction data into html div elements
+                globi.d3.selectAll('#selected-interactions').selectAll('div')
+                        .data(interactions)
+                        .enter().append('div').text(function (d) {
+                            // use interaction data to do something meaningful
+                            return '[' + d.source.name + ' (' + d.source.id + ')]-[:'
                                     + d.type
                                     + ']->[' + d.target.name + ' (' + d.target.id + ')]';
                         });
+            });
+
+            ee.on('deselect', function () {
+                // remove previously rendered interaction information
+                globi.d3.selectAll('#selected-interactions').selectAll('div').remove();
             });
 
         };
