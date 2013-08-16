@@ -13,7 +13,7 @@ The goal of this is to give you (yes you!) easy access to species interaction da
 
 If you are interested in building your own visualization based on interaction data, you might want to:
 
-1. checkout the examples in the  [```examples/```](examples/) directory, and/or,
+1. checkout the examples in the  [```examples/```](https://github.com/jhpoelen/eol-globi-js/tree/master/examples) directory, and/or,
 
 2. improve this library by becoming a contributor to this project, and/or,
 
@@ -28,7 +28,7 @@ This library is using [d3](http://d3js.org) to render svg widgets based on [GloB
 
 If you'd like the standalone version (including d3), please use globi-dist.js, otherwise, simply include the npm module [```globi```](https://npmjs.org/package/globi) module in your project.
 
-Below is an example snippet on how to render the interaction graph widget.  You can find the full example in [bipartite-graph.html](examples/bipartite-graph.html]).  The examples have been tested in Firefox.
+Below is an example snippet on how to render the interaction graph widget.  You can find the full example in [bipartite-graph.html](https://github.com/jhpoelen/eol-globi-js/tree/master/examples/bipartite-graph.html]).  The examples have been tested in Firefox.
 
 ```javascript
         ...
@@ -72,9 +72,9 @@ Below is an example snippet on how to render the interaction graph widget.  You 
         ...
 ```
 
-If all goes well, you should see something like: [![interaction graph](https://s3-us-west-2.amazonaws.com/bioticinteractions/interaction-graph.png)](examples/bipartite-graph.html)
+If all goes well, you should see something like: [![interaction graph](https://s3-us-west-2.amazonaws.com/bioticinteractions/interaction-graph.png)](https://github.com/jhpoelen/eol-globi-js/tree/master/examples/bipartite-graph.html)
 
-Another example, a [species interaction browser](examples/species_interaction_browser.html) should look something like: [![species_browser](https://s3-us-west-2.amazonaws.com/bioticinteractions/interaction-browser.png)](examples/species_interaction_browser.html)
+Another example, a [species interaction browser](https://github.com/jhpoelen/eol-globi-js/tree/master/examples/species_interaction_browser.html) should look something like: [![species_browser](https://s3-us-west-2.amazonaws.com/bioticinteractions/interaction-browser.png)](https://github.com/jhpoelen/eol-globi-js/tree/master/examples/species_interaction_browser.html)
 
 
 # Running Tests
