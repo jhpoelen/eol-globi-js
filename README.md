@@ -72,9 +72,9 @@ Below is an example snippet on how to render the interaction graph widget.  You 
         ...
 ```
 
-If all goes well, you should see something like: ![interaction graph](https://s3-us-west-2.amazonaws.com/bioticinteractions/interaction-graph.png)
+If all goes well, you should see something like: [![interaction graph](https://s3-us-west-2.amazonaws.com/bioticinteractions/interaction-graph.png)](examples/bipartite-graph.html)
 
-Another example, a [species interaction browser](examples/species_interaction_browser.html) should look something like: ![species_browser](https://s3-us-west-2.amazonaws.com/bioticinteractions/interaction-browser.png).
+Another example, a [species interaction browser](examples/species_interaction_browser.html) should look something like: [![species_browser](https://s3-us-west-2.amazonaws.com/bioticinteractions/interaction-browser.png)](examples/species_interaction_browser.html)
 
 
 # Running Tests
