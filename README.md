@@ -17,16 +17,18 @@ If you are interested in building your own visualization based on interaction da
 
 2. improve this library by becoming a contributor to this project, and/or,
 
-3. use the [GloBI REST](http://github.com/jhpoelen/eol-globi-data/wiki/rest] services directly, and/or
+3. use the [GloBI REST](http://github.com/jhpoelen/eol-globi-data/wiki/rest) services directly, and/or
 
-4. use the [eol-globi-data-js](http://github.com/jhpoelen/globi-data-js) to access data using a javascript library.
+4. use the [eol-globi-data-js](http://github.com/jhpoelen/eol-globi-data-js) to access data using a javascript library.
 
 
 # Getting Started
 
 This library is using [d3](http://d3js.org) to render svg widgets based on [GloBI](http://github.com/jhpoelen/eol-globi-data) species interaction data.
 
-Below is an example snippet on how to render the interaction graph widget.  You can find the full example in (bipartite-graph.html)[examples/bipartite-graph.html].
+If you'd like the standalone version (including d3), please use globi-dist.js, otherwise, simply include the npm module [```globi```](https://npmjs.org/package/globi) module in your project.
+
+Below is an example snippet on how to render the interaction graph widget.  You can find the full example in [bipartite-graph.html](examples/bipartite-graph.html]).  The examples have been tested in Firefox.
 
 ```javascript
         ...
@@ -70,13 +72,15 @@ Below is an example snippet on how to render the interaction graph widget.  You 
         ...
 ```
 
-If you'd like the standalone version (including d3), please use globi-dist.js.
+
 
 # Running Tests
 To test, run ```testling``` in the root directory of this project.
 
 # NPM (node package manager) module
-This library is published as the npm module (`globi`)[https://npmjs.org/package/globi] and depends on (```globi-data```)[https://npmjs.org/package/globi-data].
+[![npm logo](https://npmjs.org/static/npm.png)](http://npmjs.org)
+
+This library is published as the npm module [```globi```][https://npmjs.org/package/globi] and depends on [```globi-data```](https://npmjs.org/package/globi-data).
 
 # Feedback
  Feedback is much appreciated! Please open a (new issue)[http://github.com/jhpoelen/eol-globi-js/issues/new] to share you ideas or . . . become a contributor . . .
