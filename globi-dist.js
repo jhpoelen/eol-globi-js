@@ -245,7 +245,6 @@ var addSourceTaxonNodes = function (svg, nodeArray, ee) {
             d3.selectAll('#source-taxon').selectAll('span').remove();
             d3.selectAll('#source-names').selectAll('span').remove();
             d3.selectAll('#target-names').selectAll('span').remove();
-            ee.emit('deselectInteraction');
             return d.name;
         });
 };
@@ -278,7 +277,6 @@ var addTargetTaxonNodes = function (svg, nodeArray, ee) {
             d3.selectAll('#target-taxon').selectAll('span').remove();
             d3.selectAll('#target-names').selectAll('span').remove();
             d3.selectAll('#source-names').selectAll('span').remove();
-            ee.emit('deselectInteraction');
             return d.name;
         });
 };
