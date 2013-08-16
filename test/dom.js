@@ -24,15 +24,18 @@ test('my first dom test', function (t) {
 });
 
 test('check interaction graph insertion', function (t) {
-    t.plan(4);
-    var graphElement = document.createElement('div');
-    var graphId = 'interaction-graph';
-    graphElement.id = graphId;
-    document.body.appendChild(graphElement);
-    document.body.appendChild(document.createElement('legend'));
-    t.equal(graphElement.children.length, 0);
-    t.notEqual(globi, null);
+    t.plan(3);
     var location = { "nw_lat": 41.574361, "nw_lng": -125.533448, "se_lat": 32.750323, "se_lng": -114.744873};
-    globi.addInteractionGraph(location, {"graphId": graphId, "legendId": "legend"},  1000, 400);
-    t.equal(graphElement.children.length, 1);
+    var options = { "location": location, "width": 1000, "height": 400 };
+
+    var ee = globi.addInteractionGraph(options);
+    ee.appendTo(document.body);
+
+    t.ok(document.querySelector('.globi-interaction-graph'));
+    t.ok(document.querySelector('.globi-interaction-graph-legend'));
+
+    ee.on('ready', function () {
+        t.ok(true);
+    });
+
 });

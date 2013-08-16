@@ -1,5 +1,7 @@
-var d3 = require("d3");
-var globiData = require("globi-data");
+var d3 = require('d3');
+var globiData = require('globi-data');
+var EventEmitter = require('events').EventEmitter;
+
 
 var globi = {};
 globi.d3 = d3;
@@ -121,7 +123,7 @@ taxonColorMap.Reptilia = 'yellow';
 taxonColorMap.Bacteria = 'magenta';
 taxonColorMap.other = 'gray';
 
-var addLegend = function (id, colorMap, width, height) {
+var addLegend = function (legendDiv, colorMap, width, height) {
     var taxonRankColors = [];
     var i = 1;
     for (var taxon_rank in colorMap) {
@@ -131,7 +133,7 @@ var addLegend = function (id, colorMap, width, height) {
         }
     }
 
-    var legend = d3.select("#" + id).append("svg")
+    var legend = d3.select(legendDiv).append("svg")
         .attr("width", width / 5)
         .attr("height", height);
 
@@ -306,12 +308,20 @@ var addInteraction = function (svg, interactionArray) {
 };
 
 
-globi.addInteractionGraph = function (location, ids, width, height) {
-    var svg = d3.select("#" + ids.graphId).append("svg")
-        .attr("width", width)
-        .attr("height", height);
+globi.addInteractionGraph = function (options) {
+    var ee = new EventEmitter();
 
-    addLegend(ids.legendId, taxonColorMap, width, height);
+    var legendDiv = document.createElement('div');
+    legendDiv.setAttribute('class', 'globi-interaction-graph-legend');
+    addLegend(legendDiv, taxonColorMap, options.width, options.height);
+
+    var graphDiv = document.createElement('div');
+    graphDiv.setAttribute('class', 'globi-interaction-graph');
+
+    var svg = d3.select(graphDiv).append('svg')
+        .attr('width', options.width)
+        .attr('height', options.height);
+
 
     var callback = function (error, response) {
         if (!error) {
@@ -336,14 +346,14 @@ globi.addInteractionGraph = function (location, ids, width, height) {
             var taxonNodes = [];
             for (var nodeKey in nodeKeys) {
                 var key = nodeKeys[nodeKey];
-                var widthPerNode = width / (number_of_nodes + 1);
+                var widthPerNode = options.width / (number_of_nodes + 1);
                 nodes[key].x = widthPerNode + i * widthPerNode;
                 /**
                  * @gb: Added a second ordinate to fix y-scale problem
                  * * Additionally this speeds up rendering because we don't need Bezier ploting in #addIteraction anymore
                  */
                 nodes[key].y1 = widthPerNode;
-                nodes[key].y2 = height - widthPerNode;
+                nodes[key].y2 = options.height - widthPerNode;
                 nodes[key].radius = widthPerNode;
                 nodes[key].color = "pink";
                 taxonNodes.push(nodes[key]);
@@ -361,10 +371,17 @@ globi.addInteractionGraph = function (location, ids, width, height) {
             addTargetTaxonNodes(svg, taxonNodes, taxonColorMap);
             addInteraction(svg, interactionsArray);
         }
+        ee.emit('ready');
     };
 
-    var search = {"location": location}
+    var search = {"location": options.location}
     globiData.findSpeciesInteractions(search, callback);
+
+    ee.appendTo = function (target) {
+        target.appendChild(graphDiv);
+        target.appendChild(legendDiv);
+    };
+    return ee;
 };
 
 module.exports = globi;
