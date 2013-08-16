@@ -25,9 +25,26 @@
 
             var ee = globi.addInteractionGraph({ location: locations.california, width: width, height: height });
 
-            ee.on('ready', function() {
+            ee.on('ready', function () {
                 ee.appendGraphTo(document.querySelector('#interaction_graph'));
                 ee.appendLegendTo(document.querySelector('#interaction_graph_legend'));
+            });
+
+            ee.on('selected', function (interactions) {
+                var divs = globi.d3.selectAll('#selected-interactions').selectAll('div')
+                        .data(interactions);
+
+                divs.enter()
+                        .append('div')
+                        .text(function (d) {
+                            return  '[' + d.source.name + ' (' + d.source.id + ')]-[:'
+                                    + d.type
+                                    + ']->[' + d.target.name + ' (' + d.target.id + ')]';
+                        });
+            });
+
+            ee.on('deselectInteraction', function () {
+                globi.d3.selectAll('#selected-interactions').selectAll('div').remove();
             });
         };
 
@@ -38,13 +55,6 @@
     taxa.</p>
 <table>
     <tr>
-        <td width='1000' height='100'>
-            <b>source taxa</b>
-            <span id="source-names"/>
-            <span id="source-taxon"/>
-        </td>
-    </tr>
-    <tr>
         <td>
             <span class="chart" id="interaction_graph"/>
         </td>
@@ -53,9 +63,8 @@
         </td>
     </tr>
     <td width='1000'>
-        <b>target taxa</b>
-        <span id="target-names"/>
-        <span id="target-taxon"/>
+        <b>selected interactions</b>
+        <span id="selected-interactions"/>
     </td>
     </tr>
     <tr>
