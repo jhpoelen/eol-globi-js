@@ -377,10 +377,12 @@ globi.addInteractionGraph = function (options) {
     var search = {"location": options.location}
     globiData.findSpeciesInteractions(search, callback);
 
-    ee.appendTo = function (target) {
+    ee.appendGraphTo = function (target) {
         target.appendChild(graphDiv);
-        target.appendChild(legendDiv);
     };
+    ee.appendLegendTo = function(target) {
+        target.appendChild(legendDiv);
+    }
     return ee;
 };
 

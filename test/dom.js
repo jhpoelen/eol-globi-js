@@ -25,11 +25,12 @@ test('my first dom test', function (t) {
 
 test('check interaction graph insertion', function (t) {
     t.plan(3);
-    var location = { "nw_lat": 41.574361, "nw_lng": -125.533448, "se_lat": 32.750323, "se_lng": -114.744873};
-    var options = { "location": location, "width": 1000, "height": 400 };
+    var location = { nw_lat: 41.574361, nw_lng: -125.533448, se_lat: 32.750323, se_lng: -114.744873};
+    var options = { location: location, width: 1000, height: 400 };
 
     var ee = globi.addInteractionGraph(options);
-    ee.appendTo(document.body);
+    ee.appendGraphTo(document.body);
+    ee.appendLegendTo(document.body);
 
     t.ok(document.querySelector('.globi-interaction-graph'));
     t.ok(document.querySelector('.globi-interaction-graph-legend'));
