@@ -17,7 +17,7 @@ If you are interested in building your own visualization based on interaction da
 
 2. improve this library by becoming a contributor to this project, and/or,
 
-3. use the [GloBI REST](http://github.com/jhpoelen/eol-globi-data/wiki/rest) services directly, and/or
+3. use the [GloBI REST](http://github.com/jhpoelen/eol-globi-data/wiki/rest) services directly, and/or,
 
 4. use the [eol-globi-data-js](http://github.com/jhpoelen/eol-globi-data-js) to access data using a javascript library.
 
@@ -72,6 +72,9 @@ Below is an example snippet on how to render the interaction graph widget.  You 
         ...
 ```
 
+If all goes well, you should see something like: ![interaction graph](https://s3-us-west-2.amazonaws.com/bioticinteractions/interaction-graph.png)
+
+Another example, a [species interaction browser](examples/species_interaction_browser.html) should look something like: ![species_browser](https://s3-us-west-2.amazonaws.com/bioticinteractions/interaction-browser.png).
 
 
 # Running Tests
@@ -80,7 +83,7 @@ To test, run ```testling``` in the root directory of this project.
 # NPM (node package manager) module
 [![npm logo](https://npmjs.org/static/npm.png)](http://npmjs.org)
 
-This library is published as the npm module [```globi```][https://npmjs.org/package/globi] and depends on [```globi-data```](https://npmjs.org/package/globi-data).
+This library is published as the npm module [```globi```](https://npmjs.org/package/globi) and depends on [```globi-data```](https://npmjs.org/package/globi-data).
 
 # Feedback
- Feedback is much appreciated! Please open a (new issue)[http://github.com/jhpoelen/eol-globi-js/issues/new] to share you ideas or . . . become a contributor . . .
+ Feedback is much appreciated! Please open a [new issue](http://github.com/jhpoelen/eol-globi-js/issues/new) to share you ideas or . . . become a contributor . . .
