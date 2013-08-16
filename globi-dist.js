@@ -15,7 +15,6 @@ globi.globiData = globiData;
 // jack - introduce auto-complete, provide feedbackafter submit a search, fuzzy search
 // ryan - top 5 searches
 // bemson - drop-down
-// matt - provide example in readme.md 
 // substack - populate full data in server replies to reduce round trips
 
 globi.addTaxonInfo = function (scientificName, id, onClickScientificCallback) {
