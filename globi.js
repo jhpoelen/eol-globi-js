@@ -14,10 +14,7 @@ globi.globiData = globiData;
 // ryan - top 5 searches
 // bemson - drop-down
 // matt - provide example in readme.md 
-// ryan - test
 // substack - populate full data in server replies to reduce round trips
-// Substack/sorta - good example of dynamically insert, let consumer attach content whenever they want
-// Ryan/ Bemsom - encapsulate, pass in functions
 
 globi.addTaxonInfo = function (scientificName, id, onClickScientificCallback) {
     var imageCallback = function (error, json) {
