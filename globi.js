@@ -280,7 +280,7 @@ var addTargetTaxonNodes = function (svg, nodeArray, ee) {
         });
 };
 
-var addInteraction = function (svg, interactionArray) {
+var addInteraction = function (svg, interactionArray, ee) {
     svg.selectAll('.link')
         .data(interactionArray)
         .enter()
@@ -291,6 +291,16 @@ var addInteraction = function (svg, interactionArray) {
         .attr('style', lineStyle)
         .attr('d', function (d) {
             return 'M' + d.source.x + ' ' + d.source.y1 + ' L' + d.target.x + ' ' + d.target.y2;
+        })
+        .on('mouseover', function (d) {
+            d3.select(this).attr('style', lineStyleActive(d));
+            ee.emit('select', [d]);
+            return d;
+        })
+        .on('mouseout', function (d) {
+            d3.select(this).attr('style', lineStyle(d));
+            ee.emit('deselect');
+            return d;
         });
 };
 
@@ -356,7 +366,7 @@ globi.addInteractionGraph = function (options) {
 
             addSourceTaxonNodes(svg, taxonNodes, ee);
             addTargetTaxonNodes(svg, taxonNodes, ee);
-            addInteraction(svg, interactionsArray);
+            addInteraction(svg, interactionsArray, ee);
         }
         ee.emit('ready');
     };
