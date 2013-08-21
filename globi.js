@@ -351,7 +351,7 @@ globi.addInteractionGraph = function (options) {
                  */
                 nodes[key].y1 = widthPerNode;
                 nodes[key].y2 = options.height - widthPerNode;
-                nodes[key].radius = widthPerNode;
+                nodes[key].radius = widthPerNode / 2.0;
                 nodes[key].color = "pink";
                 taxonNodes.push(nodes[key]);
                 i = i + 1;
@@ -371,7 +371,7 @@ globi.addInteractionGraph = function (options) {
         ee.emit('ready');
     };
 
-    globiData.findSpeciesInteractions({location: options.location}, callback);
+    globiData.findSpeciesInteractions(options, callback);
 
     ee.appendGraphTo = function (target) {
         target.appendChild(graphDiv);
