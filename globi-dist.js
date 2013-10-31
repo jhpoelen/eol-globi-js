@@ -24,7 +24,7 @@ globi.createTaxonInfo = function (scientificName) {
     var info = globiData.findTaxonInfo(scientificName);
     info.on('ready', function () {
         var img = document.createElement('img');
-        var taxonInfo = info;
+        var taxonInfo = info.taxonInfo;
         img.setAttribute('src', taxonInfo.thumbnailURL);
         taxonInfoDiv.appendChild(img);
         var p = document.createElement('p');
@@ -58,10 +58,14 @@ globi.viewInteractions = function (id, interactionType, sourceTaxonScientificNam
         if (interactions && interactions.length == 0) {
             htmlText += ' <b> nothing</b>';
         }
-        d3.select(id).html(htmlText);
+        d3.select('#' + id).html(htmlText);
 
         interactions.forEach(function (interaction) {
-            globi.addTaxonInfo(interaction.target.name, id, onClickScientificName);
+            var taxonInfo = globi.createTaxonInfo(interaction.target.name);
+            taxonInfo.registerOnClick(onClickScientificName);
+            taxonInfo.on('ready', function() {
+                 taxonInfo.appendTaxonInfoTo(document.getElementById(id));
+            });
         });
     });
 };
