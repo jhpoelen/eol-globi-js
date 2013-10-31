@@ -15,62 +15,53 @@ globi.globiData = globiData;
 // bemson - drop-down
 // substack - populate full data in server replies to reduce round trips
 
-globi.addTaxonInfo = function (scientificName, id, onClickScientificCallback) {
-    var imageCallback = function (error, json) {
-        if (!error) {
-            if (json.thumbnailURL) {
-                var imgId = d3.select(id)
-                    .append('span')
+globi.createTaxonInfo = function (scientificName) {
+    var ee = new EventEmitter();
+    var taxonInfoDiv = document.createElement('div');
+    taxonInfoDiv.setAttribute('class', 'globi-taxon-info');
+    var info = globiData.findTaxonInfo(scientificName);
+    info.on('ready', function () {
+        var img = document.createElement('img');
+        var taxonInfo = info;
+        img.setAttribute('src', taxonInfo.thumbnailURL);
+        taxonInfoDiv.appendChild(img);
+        var p = document.createElement('p');
+        p.innerHTML = '<a href="' + taxonInfo.infoURL + '" target="_blank">' + taxonInfo.commonName + ' (<i>' + taxonInfo.scientificName + '</i>)</a>';
+        taxonInfoDiv.appendChild(p);
+        ee.emit('ready');
+    });
 
-                var table = imgId.append('table');
 
+    ee.appendTaxonInfoTo = function (target) {
+        target.appendChild(taxonInfoDiv);
+    };
 
-                if (json.commonName && json.scientificName && json.infoURL) {
-                    var img = table.append('tr').append('td')
-                        .append('img')
-                        .attr('src', json.thumbnailURL);
-
-                    if (onClickScientificCallback) {
-                        img
-                            .on('click', function (d) {
-                                onClickScientificCallback(json.scientificName);
-                            });
-                    }
-
-                    table.append('tr').append('td')
-                        .text(json.commonName)
-                        .append('a')
-                        .attr('href', json.infoURL)
-                        .attr('target', '_blank')
-                        .text(' >');
-
-                    var scientificNameCell = table.append('tr').append('td');
-                    scientificNameCell.html('<i>' + json.scientificName + '</i>');
-                }
-            }
+    ee.registerOnClick = function (onClick) {
+        var img = taxonInfoDiv.getElementsByTagName('img')[0];
+        if (img) {
+            img.addEventListener('click', new function () {
+                onClick(scientificName);
+            });
         }
     };
-    globiData.findTaxonInfo(scientificName, imageCallback);
-};
+    return ee;
+}
 
 globi.viewInteractions = function (id, interactionType, sourceTaxonScientificName, interactionDescription, onClickScientificName) {
-
-
-    var renderInteractions = function (error, json) {
-        if (!error) {
-            var htmlText = '<b>' + interactionDescription + '</b>';
-            if (json && json.length == 0) {
-                htmlText += ' <b> nothing</b>';
-            }
-            d3.select(id).html(htmlText);
-
-            for (var i = 0; json && i < json.length; i++) {
-                globi.addTaxonInfo(json[i].target.name, id, onClickScientificName);
-            }
-        }
-    };
     var search = {"sourceTaxonScientificName": sourceTaxonScientificName, "interactionType": interactionType};
-    globiData.findSpeciesInteractions(search, renderInteractions);
+    var interReq = globiData.findSpeciesInteractions(search);
+    interReq.on('ready', function () {
+        var htmlText = '<b>' + interactionDescription + '</b>';
+        var interactions = interReq.interactions;
+        if (interactions && interactions.length == 0) {
+            htmlText += ' <b> nothing</b>';
+        }
+        d3.select(id).html(htmlText);
+
+        interactions.forEach(function (interaction) {
+            globi.addTaxonInfo(interaction.target.name, id, onClickScientificName);
+        });
+    });
 };
 
 var matchAgainstTaxonomy = function (node) {
@@ -320,58 +311,54 @@ globi.addInteractionGraph = function (options) {
         .attr('height', options.height);
 
 
-    var callback = function (error, response) {
-        if (!error) {
+    var interactionRequest = globiData.findSpeciesInteractions(options);
+    interactionRequest.on('ready', function () {
+        var interactions = {};
+        var nodes = {};
 
-            var interactions = {};
-            var nodes = {};
+        parse(interactionRequest.interactions, interactions, nodes);
 
-            parse(response, interactions, nodes);
+        var nodeKeys = [];
 
-            var nodeKeys = [];
-
-            var number_of_nodes = 0;
-            for (var node_key in nodes) {
-                number_of_nodes++;
-                nodeKeys.push(node_key);
-            }
-
-            nodeKeys.sort();
-
-            var i = 0;
-
-            var taxonNodes = [];
-            for (var nodeKey in nodeKeys) {
-                var key = nodeKeys[nodeKey];
-                var widthPerNode = options.width / (number_of_nodes + 1);
-                nodes[key].x = widthPerNode + i * widthPerNode;
-                /**
-                 * @gb: Added a second ordinate to fix y-scale problem
-                 * * Additionally this speeds up rendering because we don't need Bezier ploting in #addIteraction anymore
-                 */
-                nodes[key].y1 = widthPerNode;
-                nodes[key].y2 = options.height - widthPerNode;
-                nodes[key].radius = widthPerNode / 2.0;
-                nodes[key].color = "pink";
-                taxonNodes.push(nodes[key]);
-                i = i + 1;
-            }
-
-            var interactionsArray = [];
-            for (var key in interactions) {
-                interactions[key].source = nodes[indexForNode(interactions[key].source)];
-                interactions[key].target = nodes[indexForNode(interactions[key].target)];
-                interactionsArray.push(interactions[key]);
-            }
-
-            addSourceTaxonNodes(svg, taxonNodes, ee);
-            addTargetTaxonNodes(svg, taxonNodes, ee);
-            addInteraction(svg, interactionsArray, ee);
+        var number_of_nodes = 0;
+        for (var node_key in nodes) {
+            number_of_nodes++;
+            nodeKeys.push(node_key);
         }
-        ee.emit('ready');
-    };
 
-    globiData.findSpeciesInteractions(options, callback);
+        nodeKeys.sort();
+
+        var i = 0;
+
+        var taxonNodes = [];
+        for (var nodeKey in nodeKeys) {
+            var key = nodeKeys[nodeKey];
+            var widthPerNode = options.width / (number_of_nodes + 1);
+            nodes[key].x = widthPerNode + i * widthPerNode;
+            /**
+             * @gb: Added a second ordinate to fix y-scale problem
+             * * Additionally this speeds up rendering because we don't need Bezier ploting in #addIteraction anymore
+             */
+            nodes[key].y1 = widthPerNode;
+            nodes[key].y2 = options.height - widthPerNode;
+            nodes[key].radius = widthPerNode / 2.0;
+            nodes[key].color = "pink";
+            taxonNodes.push(nodes[key]);
+            i = i + 1;
+        }
+
+        var interactionsArray = [];
+        for (var key in interactions) {
+            interactions[key].source = nodes[indexForNode(interactions[key].source)];
+            interactions[key].target = nodes[indexForNode(interactions[key].target)];
+            interactionsArray.push(interactions[key]);
+        }
+
+        addSourceTaxonNodes(svg, taxonNodes, ee);
+        addTargetTaxonNodes(svg, taxonNodes, ee);
+        addInteraction(svg, interactionsArray, ee);
+        ee.emit('ready');
+    });
 
     ee.appendGraphTo = function (target) {
         target.appendChild(graphDiv);

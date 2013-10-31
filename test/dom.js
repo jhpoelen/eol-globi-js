@@ -40,3 +40,14 @@ test('check interaction graph insertion', function (t) {
     });
 
 });
+
+test('render taxon info box', function(t) {
+	t.plan(2);
+	var ee = globi.createTaxonInfo('Ariopsis felis');
+	ee.appendTaxonInfoTo(document.body);
+	t.ok(document.querySelector('.globi-taxon-info'));
+	ee.on('ready', function() {
+		t.ok(true);
+		ee.registerOnClick(function(scientificName) { console.log('clicked on [' + scientificName + ']'); });
+	});
+});
