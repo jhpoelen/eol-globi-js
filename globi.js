@@ -19,18 +19,17 @@ globi.createTaxonInfo = function (scientificName) {
     var ee = new EventEmitter();
     var taxonInfoDiv = document.createElement('div');
     taxonInfoDiv.setAttribute('class', 'globi-taxon-info');
-    var info = globiData.findTaxonInfo(scientificName);
-    info.on('ready', function () {
+    var callback = function (taxonInfo) {
         var img = document.createElement('img');
-        var taxonInfo = info.taxonInfo;
+        var taxonInfo = taxonInfo;
         img.setAttribute('src', taxonInfo.thumbnailURL);
         taxonInfoDiv.appendChild(img);
         var p = document.createElement('p');
         p.innerHTML = '<a href="' + taxonInfo.infoURL + '" target="_blank">' + taxonInfo.commonName + ' (<i>' + taxonInfo.scientificName + '</i>)</a>';
         taxonInfoDiv.appendChild(p);
         ee.emit('ready');
-    });
-
+    };
+    globiData.findTaxonInfo(scientificName, callback);
 
     ee.appendTaxonInfoTo = function (target) {
         target.appendChild(taxonInfoDiv);
@@ -39,7 +38,7 @@ globi.createTaxonInfo = function (scientificName) {
     ee.registerOnClick = function (onClick) {
         var img = taxonInfoDiv.getElementsByTagName('img')[0];
         if (img) {
-            img.addEventListener('click', new function () {
+            img.addEventListener('click', function () {
                 onClick(scientificName);
             });
         }
@@ -49,15 +48,12 @@ globi.createTaxonInfo = function (scientificName) {
 
 globi.viewInteractions = function (id, interactionType, sourceTaxonScientificName, interactionDescription, onClickScientificName) {
     var search = {"sourceTaxonScientificName": sourceTaxonScientificName, "interactionType": interactionType};
-    var interReq = globiData.findSpeciesInteractions(search);
-    interReq.on('ready', function () {
+    var callback = function (interactions) {
         var htmlText = '<b>' + interactionDescription + '</b>';
-        var interactions = interReq.interactions;
         if (interactions && interactions.length == 0) {
             htmlText += ' <b> nothing</b>';
         }
         d3.select('#' + id).html(htmlText);
-
         interactions.forEach(function (interaction) {
             var taxonInfo = globi.createTaxonInfo(interaction.target.name);
             taxonInfo.registerOnClick(onClickScientificName);
@@ -65,7 +61,8 @@ globi.viewInteractions = function (id, interactionType, sourceTaxonScientificNam
                  taxonInfo.appendTaxonInfoTo(document.getElementById(id));
             });
         });
-    });
+    };
+    globiData.findSpeciesInteractions(search, callback);
 };
 
 var matchAgainstTaxonomy = function (node) {
@@ -315,12 +312,12 @@ globi.addInteractionGraph = function (options) {
         .attr('height', options.height);
 
 
-    var interactionRequest = globiData.findSpeciesInteractions(options);
-    interactionRequest.on('ready', function () {
-        var interactions = {};
+    var callback = function (interactions) {
+        console.log('found [' + interactions.length + '] interactions');
+        var mergedInteractions = {};
         var nodes = {};
 
-        parse(interactionRequest.interactions, interactions, nodes);
+        parse(interactions, mergedInteractions, nodes);
 
         var nodeKeys = [];
 
@@ -352,17 +349,19 @@ globi.addInteractionGraph = function (options) {
         }
 
         var interactionsArray = [];
-        for (var key in interactions) {
-            interactions[key].source = nodes[indexForNode(interactions[key].source)];
-            interactions[key].target = nodes[indexForNode(interactions[key].target)];
-            interactionsArray.push(interactions[key]);
+        for (var key in mergedInteractions) {
+            mergedInteractions[key].source = nodes[indexForNode(mergedInteractions[key].source)];
+            mergedInteractions[key].target = nodes[indexForNode(mergedInteractions[key].target)];
+            interactionsArray.push(mergedInteractions[key]);
         }
 
         addSourceTaxonNodes(svg, taxonNodes, ee);
         addTargetTaxonNodes(svg, taxonNodes, ee);
         addInteraction(svg, interactionsArray, ee);
         ee.emit('ready');
-    });
+    };
+
+    globiData.findSpeciesInteractions(options, callback);
 
     ee.appendGraphTo = function (target) {
         target.appendChild(graphDiv);

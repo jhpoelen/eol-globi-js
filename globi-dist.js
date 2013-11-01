@@ -21,18 +21,17 @@ globi.createTaxonInfo = function (scientificName) {
     var ee = new EventEmitter();
     var taxonInfoDiv = document.createElement('div');
     taxonInfoDiv.setAttribute('class', 'globi-taxon-info');
-    var info = globiData.findTaxonInfo(scientificName);
-    info.on('ready', function () {
+    var callback = function (taxonInfo) {
         var img = document.createElement('img');
-        var taxonInfo = info.taxonInfo;
+        var taxonInfo = taxonInfo;
         img.setAttribute('src', taxonInfo.thumbnailURL);
         taxonInfoDiv.appendChild(img);
         var p = document.createElement('p');
         p.innerHTML = '<a href="' + taxonInfo.infoURL + '" target="_blank">' + taxonInfo.commonName + ' (<i>' + taxonInfo.scientificName + '</i>)</a>';
         taxonInfoDiv.appendChild(p);
         ee.emit('ready');
-    });
-
+    };
+    globiData.findTaxonInfo(scientificName, callback);
 
     ee.appendTaxonInfoTo = function (target) {
         target.appendChild(taxonInfoDiv);
@@ -41,7 +40,7 @@ globi.createTaxonInfo = function (scientificName) {
     ee.registerOnClick = function (onClick) {
         var img = taxonInfoDiv.getElementsByTagName('img')[0];
         if (img) {
-            img.addEventListener('click', new function () {
+            img.addEventListener('click', function () {
                 onClick(scientificName);
             });
         }
@@ -51,15 +50,12 @@ globi.createTaxonInfo = function (scientificName) {
 
 globi.viewInteractions = function (id, interactionType, sourceTaxonScientificName, interactionDescription, onClickScientificName) {
     var search = {"sourceTaxonScientificName": sourceTaxonScientificName, "interactionType": interactionType};
-    var interReq = globiData.findSpeciesInteractions(search);
-    interReq.on('ready', function () {
+    var callback = function (interactions) {
         var htmlText = '<b>' + interactionDescription + '</b>';
-        var interactions = interReq.interactions;
         if (interactions && interactions.length == 0) {
             htmlText += ' <b> nothing</b>';
         }
         d3.select('#' + id).html(htmlText);
-
         interactions.forEach(function (interaction) {
             var taxonInfo = globi.createTaxonInfo(interaction.target.name);
             taxonInfo.registerOnClick(onClickScientificName);
@@ -67,7 +63,8 @@ globi.viewInteractions = function (id, interactionType, sourceTaxonScientificNam
                  taxonInfo.appendTaxonInfoTo(document.getElementById(id));
             });
         });
-    });
+    };
+    globiData.findSpeciesInteractions(search, callback);
 };
 
 var matchAgainstTaxonomy = function (node) {
@@ -317,12 +314,12 @@ globi.addInteractionGraph = function (options) {
         .attr('height', options.height);
 
 
-    var interactionRequest = globiData.findSpeciesInteractions(options);
-    interactionRequest.on('ready', function () {
-        var interactions = {};
+    var callback = function (interactions) {
+        console.log('found [' + interactions.length + '] interactions');
+        var mergedInteractions = {};
         var nodes = {};
 
-        parse(interactionRequest.interactions, interactions, nodes);
+        parse(interactions, mergedInteractions, nodes);
 
         var nodeKeys = [];
 
@@ -354,17 +351,19 @@ globi.addInteractionGraph = function (options) {
         }
 
         var interactionsArray = [];
-        for (var key in interactions) {
-            interactions[key].source = nodes[indexForNode(interactions[key].source)];
-            interactions[key].target = nodes[indexForNode(interactions[key].target)];
-            interactionsArray.push(interactions[key]);
+        for (var key in mergedInteractions) {
+            mergedInteractions[key].source = nodes[indexForNode(mergedInteractions[key].source)];
+            mergedInteractions[key].target = nodes[indexForNode(mergedInteractions[key].target)];
+            interactionsArray.push(mergedInteractions[key]);
         }
 
         addSourceTaxonNodes(svg, taxonNodes, ee);
         addTargetTaxonNodes(svg, taxonNodes, ee);
         addInteraction(svg, interactionsArray, ee);
         ee.emit('ready');
-    });
+    };
+
+    globiData.findSpeciesInteractions(options, callback);
 
     ee.appendGraphTo = function (target) {
         target.appendChild(graphDiv);
@@ -383,7 +382,7 @@ module.exports = globi;
 },{"d3":3,"events":6,"globi-data":4}],2:[function(require,module,exports){
 d3 = function() {
   var d3 = {
-    version: "3.2.7"
+    version: "3.2.8"
   };
   if (!Date.now) Date.now = function() {
     return +new Date();
@@ -514,8 +513,8 @@ d3 = function() {
     return array;
   };
   d3.permute = function(array, indexes) {
-    var permutes = [], i = -1, n = indexes.length;
-    while (++i < n) permutes[i] = array[indexes[i]];
+    var i = indexes.length, permutes = new Array(i);
+    while (i--) permutes[i] = array[indexes[i]];
     return permutes;
   };
   d3.zip = function() {
@@ -587,7 +586,9 @@ d3 = function() {
   }
   d3.map = function(object) {
     var map = new d3_Map();
-    for (var key in object) map.set(key, object[key]);
+    if (object instanceof d3_Map) object.forEach(function(key, value) {
+      map.set(key, value);
+    }); else for (var key in object) map.set(key, object[key]);
     return map;
   };
   function d3_Map() {}
@@ -703,7 +704,7 @@ d3 = function() {
   };
   d3.set = function(array) {
     var set = new d3_Set();
-    if (array) for (var i = 0; i < array.length; i++) set.add(array[i]);
+    if (array) for (var i = 0, n = array.length; i < n; ++i) set.add(array[i]);
     return set;
   };
   function d3_Set() {}
@@ -757,8 +758,8 @@ d3 = function() {
   var d3_vendorPrefixes = [ "webkit", "ms", "moz", "Moz", "o", "O" ];
   var d3_array = d3_arraySlice;
   function d3_arrayCopy(pseudoarray) {
-    var i = -1, n = pseudoarray.length, array = [];
-    while (++i < n) array.push(pseudoarray[i]);
+    var i = pseudoarray.length, array = new Array(i);
+    while (i--) array[i] = pseudoarray[i];
     return array;
   }
   function d3_arraySlice(pseudoarray) {
@@ -1238,7 +1239,7 @@ d3 = function() {
   function d3_selection_sortComparator(comparator) {
     if (!arguments.length) comparator = d3.ascending;
     return function(a, b) {
-      return !a - !b || comparator(a.__data__, b.__data__);
+      return a && b ? comparator(a.__data__, b.__data__) : !a - !b;
     };
   }
   d3_selectionPrototype.each = function(callback) {
@@ -1535,9 +1536,9 @@ d3 = function() {
     return d3.rebind(drag, event, "on");
   };
   d3.behavior.zoom = function() {
-    var translate = [ 0, 0 ], translate0, scale = 1, scaleExtent = d3_behavior_zoomInfinity, mousedown = "mousedown.zoom", mousemove = "mousemove.zoom", mouseup = "mouseup.zoom", event = d3_eventDispatch(zoom, "zoom"), x0, x1, y0, y1, touchtime;
+    var translate = [ 0, 0 ], translate0, scale = 1, scaleExtent = d3_behavior_zoomInfinity, mousedown = "mousedown.zoom", mousemove = "mousemove.zoom", mouseup = "mouseup.zoom", touchstart = "touchstart.zoom", touchmove = "touchmove.zoom", touchend = "touchend.zoom", touchtime, event = d3_eventDispatch(zoom, "zoom"), x0, x1, y0, y1;
     function zoom() {
-      this.on(mousedown, mousedowned).on(d3_behavior_zoomWheel + ".zoom", mousewheeled).on(mousemove, mousewheelreset).on("dblclick.zoom", dblclicked).on("touchstart.zoom", touchstarted);
+      this.on(mousedown, mousedowned).on(d3_behavior_zoomWheel + ".zoom", mousewheeled).on(mousemove, mousewheelreset).on("dblclick.zoom", dblclicked).on(touchstart, touchstarted);
     }
     zoom.translate = function(x) {
       if (!arguments.length) return translate;
@@ -1615,27 +1616,37 @@ d3 = function() {
       }
     }
     function touchstarted() {
-      var target = this, event_ = event.of(target, arguments), touches = d3.touches(target), locations = {}, distance0 = 0, scale0 = scale, now = Date.now(), name = "zoom-" + d3.event.changedTouches[0].identifier, touchmove = "touchmove." + name, touchend = "touchend." + name, w = d3.select(d3_window).on(touchmove, moved).on(touchend, ended), t = d3.select(target).on(mousedown, null), dragRestore = d3_event_dragSuppress();
-      touches.forEach(function(t) {
-        locations[t.identifier] = location(t);
-      });
-      if (touches.length === 1) {
-        if (now - touchtime < 500) {
-          var p = touches[0], l = location(touches[0]);
-          scaleTo(scale * 2);
-          translateTo(p, l);
-          d3_eventPreventDefault();
-          dispatch(event_);
+      var target = this, event_ = event.of(target, arguments), locations0, distance0 = 0, scale0, w = d3.select(d3_window).on(touchmove, moved).on(touchend, ended), t = d3.select(target).on(mousedown, null).on(touchstart, started), dragRestore = d3_event_dragSuppress();
+      started();
+      function relocate() {
+        var touches = d3.touches(target);
+        scale0 = scale;
+        locations0 = {};
+        touches.forEach(function(t) {
+          locations0[t.identifier] = location(t);
+        });
+        return touches;
+      }
+      function started() {
+        var now = Date.now(), touches = relocate();
+        if (touches.length === 1) {
+          if (now - touchtime < 500) {
+            var p = touches[0], l = locations0[p.identifier];
+            scaleTo(scale * 2);
+            translateTo(p, l);
+            d3_eventPreventDefault();
+            dispatch(event_);
+          }
+          touchtime = now;
+        } else if (touches.length > 1) {
+          var p = touches[0], q = touches[1], dx = p[0] - q[0], dy = p[1] - q[1];
+          distance0 = dx * dx + dy * dy;
         }
-        touchtime = now;
-      } else if (touches.length > 1) {
-        var p = touches[0], q = touches[1], dx = p[0] - q[0], dy = p[1] - q[1];
-        distance0 = dx * dx + dy * dy;
       }
       function moved() {
-        var touches = d3.touches(target), p0 = touches[0], l0 = locations[p0.identifier];
+        var touches = d3.touches(target), p0 = touches[0], l0 = locations0[p0.identifier];
         if (p1 = touches[1]) {
-          var p1, l1 = locations[p1.identifier], scale1 = d3.event.scale;
+          var p1, l1 = locations0[p1.identifier], scale1 = d3.event.scale;
           if (scale1 == null) {
             var distance1 = (distance1 = p1[0] - p0[0]) * distance1 + (distance1 = p1[1] - p0[1]) * distance1;
             scale1 = distance0 && Math.sqrt(distance1 / distance0);
@@ -1649,9 +1660,13 @@ d3 = function() {
         dispatch(event_);
       }
       function ended() {
-        w.on(touchmove, null).on(touchend, null);
-        t.on(mousedown, mousedowned);
-        dragRestore();
+        if (d3.event.touches.length) {
+          relocate();
+        } else {
+          w.on(touchmove, null).on(touchend, null);
+          t.on(mousedown, mousedowned).on(touchstart, touchstarted);
+          dragRestore();
+        }
       }
     }
     function mousewheeled() {
@@ -7226,9 +7241,8 @@ d3 = function() {
       return scale;
     };
     scale.ticks = function() {
-      var extent = d3_scaleExtent(domain), ticks = [];
-      if (extent.every(isFinite)) {
-        var u = extent[0], v = extent[1], i = Math.floor(log(u)), j = Math.ceil(log(v)), n = base % 1 ? 2 : base;
+      var extent = d3_scaleExtent(domain), ticks = [], u = extent[0], v = extent[1], i = Math.floor(log(u)), j = Math.ceil(log(v)), n = base % 1 ? 2 : base;
+      if (isFinite(j - i)) {
         if (positive) {
           for (;i < j; i++) for (var k = 1; k < n; k++) ticks.push(pow(i) * k);
           ticks.push(pow(i));
@@ -9182,8 +9196,6 @@ module.exports = d3;
 (function () { delete this.d3; })(); // unset global
 
 },{"./d3":2}],4:[function(require,module,exports){
-var EventEmitter = require('events').EventEmitter;
-
 var globiData = {};
 
 var urlPrefix = 'http://trophicgraph.com:8080';
@@ -9255,43 +9267,42 @@ var createReq = function () {
     return req;
 };
 
-globiData.findSpeciesInteractions = function (search) {
-    var ee = new EventEmitter();
+globiData.findInteractionTypes = function(callback) {
+    var req = createReq();
+    req.open('GET', urlPrefix + '/interactionTypes', true);
+    req.onreadystatechange = function() {
+        if (req.readyState === 4 && req.status === 200) {
+            callback(JSON.parse(req.responseText));
+        }
+    };
+    req.send(null);
+}
+
+globiData.findSpeciesInteractions = function (search, callback) {
     var uri = globiData.urlForTaxonInteractionQuery(search);
     var req = createReq();
-    req.open('GET', uri ,true);
+    req.open('GET', uri, true);
     req.onreadystatechange = function() {
         if (req.readyState === 4 && req.status === 200) {
-            console.log('requesting [' + uri + ']');
-            ee.interactions = JSON.parse(req.responseText);
-            ee.emit('ready');
+            callback(JSON.parse(req.responseText));
         }
     };
     req.send(null);
-    ee.interactions = [];
-    return ee;
 };
 
-globiData.findTaxonInfo = function (scientificName) {
-    var ee = new EventEmitter();
+globiData.findTaxonInfo = function (scientificName, callback) {
     var uri = globiData.urlForTaxonImageQuery(scientificName);
-    console.log('requesting taxon image data from: [' + uri + ']');
     var req = createReq();
-    req.open('GET', uri ,true);
+    req.open('GET', uri, true);
     req.onreadystatechange = function() {
         if (req.readyState === 4 && req.status === 200) {
-            console.log('received some data [' + req.responseText + ']');
-            ee.taxonInfo = JSON.parse(req.responseText);
-            ee.emit('ready');
+            callback(JSON.parse(req.responseText));
         }
     };
     req.send(null);
-    ee.taxonInfo = { scientificName: scientificName };
-    return ee;
 };
 
-globiData.findCloseTaxonMatches = function (name) {
-    var ee = new EventEmitter();
+globiData.findCloseTaxonMatches = function (name, callback) {
     var uri = globiData.urlForFindCloseTaxonMatches(name);
     var req = createReq();
     req.open('GET', uri ,true);
@@ -9299,6 +9310,7 @@ globiData.findCloseTaxonMatches = function (name) {
         if (req.readyState === 4 && req.status === 200) {
             var response = JSON.parse(req.responseText);
             var data = response.data;
+            var closeMatches = [];
             data.forEach(function(element, index) {
                 var commonNamesString = element[1];
                 var commonNamesSplit = commonNamesString.split('|');
@@ -9310,19 +9322,17 @@ globiData.findCloseTaxonMatches = function (name) {
                     }
                 });
                 var path = element[2].split('|');
-                ee.closeMatches[index] = { scientificName: element[0], commonNames: commonNames, path: path};
+                closeMatches[index] = { scientificName: element[0], commonNames: commonNames, path: path};
             });
-            ee.emit('ready');
+            callback(closeMatches);
         }
     };
     req.send(null);
-    ee.closeMatches = [];
-    return ee;
 };
 
 module.exports = globiData;
 
-},{"events":6}],5:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 
 
 //
