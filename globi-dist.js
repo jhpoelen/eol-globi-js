@@ -9201,7 +9201,7 @@ var globiData = {};
 var urlPrefix = 'http://trophicgraph.com:8080';
 
 globiData.urlForFindCloseTaxonMatches = function (name) {
-    return urlPrefix + '/findCloseMatchesForTaxon/'  + encodeURIComponent(name);
+    return urlPrefix + '/findCloseMatchesForTaxon/' + encodeURIComponent(name);
 }
 
 globiData.urlForTaxonInteractionQuery = function (search) {
@@ -9267,10 +9267,73 @@ var createReq = function () {
     return req;
 };
 
-globiData.findInteractionTypes = function(callback) {
+globiData.findSources = function (callback) {
+    var req = createReq();
+    req.open('GET', urlPrefix + '/sources', true);
+    req.onreadystatechange = function () {
+        if (req.readyState === 4 && req.status === 200) {
+            var result = JSON.parse(req.responseText);
+            var sources = [];
+            var data = result['data'];
+            data.forEach(function (element, index) {
+                sources[index] = element[0];
+            });
+            callback(sources);
+        }
+    };
+    req.send(null);
+};
+
+globiData.findStudyStats = function (search, callback) {
+    var req = createReq();
+    var uri = urlPrefix + '/contributors';
+    if (search.source) {
+        uri = uri + '?source=' + encodeURIComponent(search.source);
+    }
+    req.open('GET', uri, true);
+    req.onreadystatechange = function () {
+        if (req.readyState === 4 && req.status === 200) {
+            var resp = JSON.parse(req.responseText);
+            var studyStats = [];
+            for (var i = 0; i < resp.data.length; i++) {
+                var row = resp.data[i];
+                var reference = row[2];
+                var name = row[3];
+                if (name.length > 0) {
+                    reference = name + ' ' + reference;
+                }
+                studyStats[i] = { reference: reference, totalInteractions: row[4], totalSourceTaxa: row[5], totalTargetTaxa: row[6]};
+            }
+            callback(studyStats);
+        }
+    };
+    req.send(null);
+}
+
+globiData.findStats = function (search, callback) {
+    var req = createReq();
+    var uri = urlPrefix + '/info';
+    if (search.source) {
+        uri = uri + '?source=' + encodeURIComponent(search.source);
+    }
+    req.open('GET', uri, true);
+    req.onreadystatechange = function () {
+        if (req.readyState === 4 && req.status === 200) {
+            var resp = JSON.parse(req.responseText);
+            var stats = {numberOfStudies: resp.data[0][0],
+                totalInteractions: resp.data[0][1],
+                totalSourceTaxa: resp.data[0][2],
+                totalTargetTaxa: resp.data[0][3]};
+            callback(stats);
+        }
+    };
+    req.send(null);
+}
+
+globiData.findInteractionTypes = function (callback) {
     var req = createReq();
     req.open('GET', urlPrefix + '/interactionTypes', true);
-    req.onreadystatechange = function() {
+    req.onreadystatechange = function () {
         if (req.readyState === 4 && req.status === 200) {
             callback(JSON.parse(req.responseText));
         }
@@ -9282,7 +9345,7 @@ globiData.findSpeciesInteractions = function (search, callback) {
     var uri = globiData.urlForTaxonInteractionQuery(search);
     var req = createReq();
     req.open('GET', uri, true);
-    req.onreadystatechange = function() {
+    req.onreadystatechange = function () {
         if (req.readyState === 4 && req.status === 200) {
             callback(JSON.parse(req.responseText));
         }
@@ -9294,7 +9357,7 @@ globiData.findTaxonInfo = function (scientificName, callback) {
     var uri = globiData.urlForTaxonImageQuery(scientificName);
     var req = createReq();
     req.open('GET', uri, true);
-    req.onreadystatechange = function() {
+    req.onreadystatechange = function () {
         if (req.readyState === 4 && req.status === 200) {
             callback(JSON.parse(req.responseText));
         }
@@ -9305,24 +9368,29 @@ globiData.findTaxonInfo = function (scientificName, callback) {
 globiData.findCloseTaxonMatches = function (name, callback) {
     var uri = globiData.urlForFindCloseTaxonMatches(name);
     var req = createReq();
-    req.open('GET', uri ,true);
-    req.onreadystatechange = function() {
+    req.open('GET', uri, true);
+    req.onreadystatechange = function () {
         if (req.readyState === 4 && req.status === 200) {
             var response = JSON.parse(req.responseText);
             var data = response.data;
             var closeMatches = [];
-            data.forEach(function(element, index) {
+            data.forEach(function (element, index) {
                 var commonNamesString = element[1];
                 var commonNamesSplit = commonNamesString.split('|');
                 var commonNames = [];
-                commonNamesSplit.forEach(function(element, index) {
+                var taxonHierarchy = [];
+                commonNamesSplit.forEach(function (element, index) {
                     var commonName = element.split('@');
                     if (commonName.length > 1) {
-                        commonNames[index] = { name: commonName[0], lang: commonName[1]};
+                        commonNames[index] = { name: commonName[0].trim(), lang: commonName[1].trim()};
                     }
                 });
                 var path = element[2].split('|');
-                closeMatches[index] = { scientificName: element[0], commonNames: commonNames, path: path};
+                path.forEach(function (taxon, index) {
+                    taxonHierarchy[index] = taxon.trim();
+                });
+                var scientificName = element[0].trim();
+                closeMatches[index] = { scientificName: scientificName, commonNames: commonNames, path: taxonHierarchy};
             });
             callback(closeMatches);
         }
