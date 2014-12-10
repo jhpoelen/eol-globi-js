@@ -1,6 +1,7 @@
 eol-globi-js
 ============
 
+[![Build Status](https://travis-ci.org/jhpoelen/eol-globi-js.svg?branch=master)](https://travis-ci.org/jhpoelen/eol-globi-js)
 [![Build Status](https://ci.testling.com/jhpoelen/eol-globi-js.png)](https://ci.testling.com/jhpoelen/eol-globi-js)
 
 #Why?
