@@ -321,8 +321,10 @@ globi.addInteractionGraph = function (options) {
 
         var number_of_nodes = 0;
         for (var node_key in nodes) {
-            number_of_nodes++;
-            nodeKeys.push(node_key);
+            if (nodes.hasOwnProperty(node_key)) {
+              number_of_nodes++;
+              nodeKeys.push(node_key);
+            }
         }
 
         nodeKeys.sort();
@@ -331,26 +333,30 @@ globi.addInteractionGraph = function (options) {
 
         var taxonNodes = [];
         for (var nodeKey in nodeKeys) {
-            var key = nodeKeys[nodeKey];
-            var widthPerNode = options.width / (number_of_nodes + 1);
-            nodes[key].x = widthPerNode + i * widthPerNode;
-            /**
-             * @gb: Added a second ordinate to fix y-scale problem
-             * * Additionally this speeds up rendering because we don't need Bezier ploting in #addIteraction anymore
-             */
-            nodes[key].y1 = widthPerNode;
-            nodes[key].y2 = options.height - widthPerNode;
-            nodes[key].radius = widthPerNode / 2.0;
-            nodes[key].color = "pink";
-            taxonNodes.push(nodes[key]);
-            i = i + 1;
+            if (nodeKeys.hasOwnProperty(nodeKey)) {
+              var key = nodeKeys[nodeKey];
+              var widthPerNode = options.width / (number_of_nodes + 1);
+              nodes[key].x = widthPerNode + i * widthPerNode;
+              /**
+              * @gb: Added a second ordinate to fix y-scale problem
+              * * Additionally this speeds up rendering because we don't need Bezier ploting in #addIteraction anymore
+              */
+              nodes[key].y1 = widthPerNode;
+              nodes[key].y2 = options.height - widthPerNode;
+              nodes[key].radius = widthPerNode / 2.0;
+              nodes[key].color = "pink";
+              taxonNodes.push(nodes[key]);
+              i = i + 1;
+            }
         }
 
         var interactionsArray = [];
-        for (var i in mergedInteractions) {
-            mergedInteractions[i].source = nodes[indexForNode(mergedInteractions[i].source)];
-            mergedInteractions[i].target = nodes[indexForNode(mergedInteractions[i].target)];
-            interactionsArray.push(mergedInteractions[i]);
+        for (var mi in mergedInteractions) {
+            if (mergedInteractions.hasOwnProperty(mi)) {
+              mergedInteractions[mi].source = nodes[indexForNode(mergedInteractions[mi].source)];
+              mergedInteractions[mi].target = nodes[indexForNode(mergedInteractions[mi].target)];
+              interactionsArray.push(mergedInteractions[mi]);
+            }
         }
 
         addSourceTaxonNodes(svg, taxonNodes, ee);
