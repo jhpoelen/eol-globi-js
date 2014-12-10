@@ -21,7 +21,6 @@ globi.createTaxonInfo = function (scientificName) {
     taxonInfoDiv.setAttribute('class', 'globi-taxon-info');
     var callback = function (taxonInfo) {
         var img = document.createElement('img');
-        var taxonInfo = taxonInfo;
         img.setAttribute('src', taxonInfo.thumbnailURL);
         taxonInfoDiv.appendChild(img);
         var p = document.createElement('p');
@@ -44,13 +43,13 @@ globi.createTaxonInfo = function (scientificName) {
         }
     };
     return ee;
-}
+};
 
 globi.viewInteractions = function (id, interactionType, sourceTaxonScientificName, interactionDescription, onClickScientificName) {
     var search = {"sourceTaxonScientificName": sourceTaxonScientificName, "interactionType": interactionType};
     var callback = function (interactions) {
         var htmlText = '<b>' + interactionDescription + '</b>';
-        if (interactions && interactions.length == 0) {
+        if (interactions && interactions.length === 0) {
             htmlText += ' <b> nothing</b>';
         }
         d3.select('#' + id).html(htmlText);
@@ -66,8 +65,8 @@ globi.viewInteractions = function (id, interactionType, sourceTaxonScientificNam
 };
 
 var matchAgainstTaxonomy = function (node) {
-    return node.path && 'no:match' != node.path;
-}
+    return node.path && 'no:match' !== node.path;
+};
 
 var indexForNode = function (node) {
     return node.path + '_' + node.name;
@@ -80,8 +79,7 @@ var classnameForNode = function (node) {
 var parse = function (response, interactions, nodes) {
     for (var i = response.length - 1; i >= 0; i--) {
         var inter = response[i];
-        if (matchAgainstTaxonomy(inter.source)
-            && matchAgainstTaxonomy(inter.target)) {
+        if (matchAgainstTaxonomy(inter.source) && matchAgainstTaxonomy(inter.target)) {
             var source = inter.source.name;
 
             var sourceIndex = indexForNode(inter.source);
@@ -163,10 +161,10 @@ var addLegend = function (legendDiv, colorMap, width, height) {
             return 1.2 * height / 50 + radius + d.id * (yOffset + (radius * 2));
         });
 
-}
+};
 
 var pathColor = function (d) {
-    var color = taxonColorMap['other'];
+    var color = taxonColorMap.other;
     for (var taxonRank in taxonColorMap) {
         if (taxonColorMap.hasOwnProperty(taxonRank)) {
             if (d.path && d.path.match(taxonRank)) {
@@ -188,11 +186,11 @@ var nodeStyleActive = function (d) {
 
 
 var lineStyle = function (d) {
-    return 'stroke:' + (d.type == 'ATE' ? 'lightgreen' : 'pink') + '; fill:none; opacity:0.5;';
+    return 'stroke:' + (d.type === 'ATE' ? 'lightgreen' : 'pink') + '; fill:none; opacity:0.5;';
 };
 
 var lineStyleActive = function (d) {
-    return 'stroke:' + (d.type == 'ATE' ? 'green' : 'red') + "; fill:none; opacity:0.9;";
+    return 'stroke:' + (d.type === 'ATE' ? 'green' : 'red') + "; fill:none; opacity:0.9;";
 };
 
 
@@ -349,10 +347,10 @@ globi.addInteractionGraph = function (options) {
         }
 
         var interactionsArray = [];
-        for (var key in mergedInteractions) {
-            mergedInteractions[key].source = nodes[indexForNode(mergedInteractions[key].source)];
-            mergedInteractions[key].target = nodes[indexForNode(mergedInteractions[key].target)];
-            interactionsArray.push(mergedInteractions[key]);
+        for (var i in mergedInteractions) {
+            mergedInteractions[i].source = nodes[indexForNode(mergedInteractions[i].source)];
+            mergedInteractions[i].target = nodes[indexForNode(mergedInteractions[i].target)];
+            interactionsArray.push(mergedInteractions[i]);
         }
 
         addSourceTaxonNodes(svg, taxonNodes, ee);
@@ -368,7 +366,7 @@ globi.addInteractionGraph = function (options) {
     };
     ee.appendLegendTo = function (target) {
         target.appendChild(legendDiv);
-    }
+    };
     return ee;
 };
 

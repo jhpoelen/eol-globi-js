@@ -23,7 +23,6 @@ globi.createTaxonInfo = function (scientificName) {
     taxonInfoDiv.setAttribute('class', 'globi-taxon-info');
     var callback = function (taxonInfo) {
         var img = document.createElement('img');
-        var taxonInfo = taxonInfo;
         img.setAttribute('src', taxonInfo.thumbnailURL);
         taxonInfoDiv.appendChild(img);
         var p = document.createElement('p');
@@ -46,13 +45,13 @@ globi.createTaxonInfo = function (scientificName) {
         }
     };
     return ee;
-}
+};
 
 globi.viewInteractions = function (id, interactionType, sourceTaxonScientificName, interactionDescription, onClickScientificName) {
     var search = {"sourceTaxonScientificName": sourceTaxonScientificName, "interactionType": interactionType};
     var callback = function (interactions) {
         var htmlText = '<b>' + interactionDescription + '</b>';
-        if (interactions && interactions.length == 0) {
+        if (interactions && interactions.length === 0) {
             htmlText += ' <b> nothing</b>';
         }
         d3.select('#' + id).html(htmlText);
@@ -68,8 +67,8 @@ globi.viewInteractions = function (id, interactionType, sourceTaxonScientificNam
 };
 
 var matchAgainstTaxonomy = function (node) {
-    return node.path && 'no:match' != node.path;
-}
+    return node.path && 'no:match' !== node.path;
+};
 
 var indexForNode = function (node) {
     return node.path + '_' + node.name;
@@ -82,8 +81,7 @@ var classnameForNode = function (node) {
 var parse = function (response, interactions, nodes) {
     for (var i = response.length - 1; i >= 0; i--) {
         var inter = response[i];
-        if (matchAgainstTaxonomy(inter.source)
-            && matchAgainstTaxonomy(inter.target)) {
+        if (matchAgainstTaxonomy(inter.source) && matchAgainstTaxonomy(inter.target)) {
             var source = inter.source.name;
 
             var sourceIndex = indexForNode(inter.source);
@@ -165,10 +163,10 @@ var addLegend = function (legendDiv, colorMap, width, height) {
             return 1.2 * height / 50 + radius + d.id * (yOffset + (radius * 2));
         });
 
-}
+};
 
 var pathColor = function (d) {
-    var color = taxonColorMap['other'];
+    var color = taxonColorMap.other;
     for (var taxonRank in taxonColorMap) {
         if (taxonColorMap.hasOwnProperty(taxonRank)) {
             if (d.path && d.path.match(taxonRank)) {
@@ -190,11 +188,11 @@ var nodeStyleActive = function (d) {
 
 
 var lineStyle = function (d) {
-    return 'stroke:' + (d.type == 'ATE' ? 'lightgreen' : 'pink') + '; fill:none; opacity:0.5;';
+    return 'stroke:' + (d.type === 'ATE' ? 'lightgreen' : 'pink') + '; fill:none; opacity:0.5;';
 };
 
 var lineStyleActive = function (d) {
-    return 'stroke:' + (d.type == 'ATE' ? 'green' : 'red') + "; fill:none; opacity:0.9;";
+    return 'stroke:' + (d.type === 'ATE' ? 'green' : 'red') + "; fill:none; opacity:0.9;";
 };
 
 
@@ -351,10 +349,10 @@ globi.addInteractionGraph = function (options) {
         }
 
         var interactionsArray = [];
-        for (var key in mergedInteractions) {
-            mergedInteractions[key].source = nodes[indexForNode(mergedInteractions[key].source)];
-            mergedInteractions[key].target = nodes[indexForNode(mergedInteractions[key].target)];
-            interactionsArray.push(mergedInteractions[key]);
+        for (var i in mergedInteractions) {
+            mergedInteractions[i].source = nodes[indexForNode(mergedInteractions[i].source)];
+            mergedInteractions[i].target = nodes[indexForNode(mergedInteractions[i].target)];
+            interactionsArray.push(mergedInteractions[i]);
         }
 
         addSourceTaxonNodes(svg, taxonNodes, ee);
@@ -370,7 +368,7 @@ globi.addInteractionGraph = function (options) {
     };
     ee.appendLegendTo = function (target) {
         target.appendChild(legendDiv);
-    }
+    };
     return ee;
 };
 
@@ -9203,7 +9201,7 @@ var urlPrefix = 'http://api.globalbioticinteractions.org';
 
 globiData.urlForFindCloseTaxonMatches = function (name) {
     return urlPrefix + '/findCloseMatchesForTaxon/' + encodeURIComponent(name);
-}
+};
 
 globiData.urlForTaxonInteractionQuery = function (search) {
     var uri = urlPrefix;
@@ -9223,7 +9221,7 @@ globiData.urlForTaxonInteractionQuery = function (search) {
             locationQuery += elem + '=' + location[elem] + '&';
         }
         return locationQuery;
-    }
+    };
 
     uri = uri + '?type=json.v2';
     if (search.location) {
@@ -9238,7 +9236,6 @@ globiData.urlForTaxonInteractionQuery = function (search) {
             }
             uri = uri + taxonQuery;
         }
-
     }
 
     addTaxonQuery(search.sourceTaxa, 'sourceTaxon');
@@ -9259,7 +9256,7 @@ globiData.urlForTaxonImagesQuery = function(scientificNames) {
 		}
 	}
 	return urlPrefix + '/imagesForNames' + nameQuery;
-}
+};
 
 var createReq = function () {
     var req;
@@ -9288,7 +9285,7 @@ globiData.findSources = function (callback) {
         if (req.readyState === 4 && req.status === 200) {
             var result = JSON.parse(req.responseText);
             var sources = [];
-            var data = result['data'];
+            var data = result.data;
             data.forEach(function (element, index) {
                 sources[index] = element[0];
             });
@@ -9334,7 +9331,7 @@ globiData.findStudyStats = function (search, callback) {
 				}
 
         var externalId = row[11];
-        if (externalId && externalId.length > 0 && externalId.match('^((http)|(https))\://') !== null) {
+        if (externalId && externalId.length > 0 && externalId.match('^((http)|(https))://') !== null) {
           stats.url = externalId;
         }
 				
@@ -9344,7 +9341,7 @@ globiData.findStudyStats = function (search, callback) {
     }
   };
   req.send(null);
-}
+};
 
 globiData.findStats = function (search, callback) {
     var req = createReq();
@@ -9365,52 +9362,47 @@ globiData.findStats = function (search, callback) {
         }
     };
     req.send(null);
-}
+};
+
+globiData.sendRequest = function(req, callback) {
+  req.onreadystatechange = function() {
+    if (req.readyState === 4 && req.status === 200) {
+      callback(JSON.parse(req.responseText));
+    }
+  };
+  req.send(null);
+};
 
 globiData.findInteractionTypes = function (callback) {
     var req = createReq();
     req.open('GET', urlPrefix + '/interactionTypes', true);
-    req.onreadystatechange = function () {
-        if (req.readyState === 4 && req.status === 200) {
-            callback(JSON.parse(req.responseText));
-        }
-    };
-    req.send(null);
-}
+    globiData.sendRequest(req, callback);
+};
+
 
 globiData.findSpeciesInteractions = function (search, callback) {
     var uri = globiData.urlForTaxonInteractionQuery(search);
     var req = createReq();
     req.open('GET', uri, true);
-    req.onreadystatechange = function () {
-        if (req.readyState === 4 && req.status === 200) {
-            callback(JSON.parse(req.responseText));
-        }
-    };
-    req.send(null);
+    globiData.sendRequest(req, callback);
 };
 
 
 globiData.findTaxonInfo = function (scientificName, callback) {
 	var uri = globiData.urlForTaxonImageQuery(scientificName);	
 	globiData.get(uri, callback);
-}
+};
 
 globiData.findTaxaInfo = function (scientificNames, callback) {
 	var uri = globiData.urlForTaxonImagesQuery(scientificNames);
 	console.log(uri);	
 	globiData.get(uri, callback);
-}
+};
 
 globiData.get = function (uri, callback) {
     var req = createReq();
     req.open('GET', uri, true);
-    req.onreadystatechange = function () {
-        if (req.readyState === 4 && req.status === 200) {
-            callback(JSON.parse(req.responseText));
-        }
-    };
-    req.send(null);
+    globiData.sendRequest(req, callback);
 };
 
 globiData.findCloseTaxonMatches = function (name, callback) {
@@ -9424,7 +9416,7 @@ globiData.findCloseTaxonMatches = function (name, callback) {
             var closeMatches = [];
             data.forEach(function (element, index) {
                 var commonNamesString = element[1];
-				commonNamesString = commonNamesString == null ? "" : commonNamesString;
+				commonNamesString = commonNamesString === null ? "" : commonNamesString;
                 var commonNamesSplit = commonNamesString.split('|');
                 var commonNames = [];
                 var taxonHierarchy = [];
@@ -9434,7 +9426,9 @@ globiData.findCloseTaxonMatches = function (name, callback) {
                         commonNames[index] = { name: commonName[0].trim(), lang: commonName[1].trim()};
                     }
                 });
-                var path = element[2].split('|');
+                var pathString = element[2];
+                pathString = pathString === null ? "" : pathString;
+                var path = pathString.split('|');
                 path.forEach(function (taxon, index) {
                     taxonHierarchy[index] = taxon.trim();
                 });
