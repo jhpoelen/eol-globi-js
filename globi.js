@@ -376,7 +376,31 @@ globi.addInteractionGraph = function (options) {
     return ee;
 };
 
+/**
+ * Transforms a common name list string into a map
+ * f.x.:
+ *  "foo @en | bar @de" => {en: "foo", de: "bar"}
+ *
+ * @param {string} pipedCommonNameList
+ * @param {boolean} [override]
+ * @returns {Object.<string, string>}
+ */
+globi.transformPipedCommonNameList = function(pipedCommonNameList, override) {
+    override = typeof override !== 'undefined' ? !!override : true;
+    var commonNameObject = {};
+    var splittedByPipeList = pipedCommonNameList.split('|').map(function(item) { return item.trim(); } );
+    splittedByPipeList.forEach(function(item) {
+        if (typeof item !== 'undefined') {
+            var splittedByAtItemParts = item.split('@').map(function(item) { return item.trim(); } );
+            if (typeof splittedByAtItemParts[1] !== 'undefined') {
+                if( override || typeof commonNameObject[splittedByAtItemParts[1]] === 'undefined') {
+                    commonNameObject[splittedByAtItemParts[1]] = splittedByAtItemParts[0];
+                }
+            }
+        }
+    });
+
+    return commonNameObject;
+};
+
 module.exports = globi;
-
-
-
