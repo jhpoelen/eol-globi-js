@@ -376,4 +376,70 @@ globi.addInteractionGraph = function (options) {
     return ee;
 };
 
+/**
+ * Normalizes coordinates into an object with
+ * north, south, west, and east properties
+ *
+ * normalizing follows the rules:
+ * 1. illegal parameter defaults to standard area
+ * 2. illegal parameter count defaults to standard area
+ * 3. north > south; west < east
+ * 4. single point expands to "4%"-area
+ *
+ * @param coordinates
+ * @returns {{}}
+ */
+globi.getNormalizeAreaCoordinates = function(coordinates) {
+    var temp,
+        normalized = {};
+    switch (arguments.length) {
+        case 1:
+            normalized = arguments[0];
+            break;
+        case 2:
+            arguments[2] = 1.02 * arguments[0];
+            arguments[3] = 1.02 * arguments[1];
+            arguments[0] = 0.98 * arguments[0];
+            arguments[1] = 0.98 * arguments[1];
+        case 4:
+            normalized = {
+                north: arguments[1],
+                west: arguments[0],
+                south: arguments[3],
+                east: arguments[2]
+            };
+            break;
+        default:
+            normalized = getDefaultArea();
+            break;
+    }
+    if (typeof normalized.north === 'undefined' ||
+        typeof normalized.south === 'undefined' ||
+        typeof normalized.west === 'undefined' ||
+        typeof normalized.east === 'undefined'
+    ) {
+        normalized = getDefaultArea();
+    }
+    if (normalized.north < normalized.south) {
+        temp = normalized.north;
+        normalized.north = normalized.south;
+        normalized.south = temp;
+    }
+    if (normalized.west > normalized.east) {
+        temp = normalized.west;
+        normalized.west = normalized.east;
+        normalized.east = temp;
+    }
+    return normalized;
+
+    function getDefaultArea() {
+        return {
+            north: 90,
+            west: -180,
+            south: -90,
+            east: 180
+        };
+    }
+};
+
 module.exports = globi;
