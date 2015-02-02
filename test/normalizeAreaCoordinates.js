@@ -6,7 +6,7 @@ test('getNormalizeAreaCoordinates with 0 arguments should use defaultArea', func
 
     var result = globi.getNormalizeAreaCoordinates();
     t.equal(typeof result, 'object');
-    t.deepEqual(result, { "north":90,"west":-180,"south":-90,"east":180 });
+    t.deepEqual(result, globi.DEFAULT_AREA);
 });
 
 test('getNormalizeAreaCoordinates with 1 argument should use this as an area object', function(t) {
@@ -24,9 +24,9 @@ test('getNormalizeAreaCoordinates with 1 non-sense argument should use defaultAr
     var result2 = globi.getNormalizeAreaCoordinates(5);
 
     t.equal(typeof result1, 'object');
-    t.deepEqual(result1, { "north":90,"west":-180,"south":-90,"east":180 });
+    t.deepEqual(result1, globi.getNormalizeAreaCoordinates());
     t.equal(typeof result2, 'object');
-    t.deepEqual(result2, { "north":90,"west":-180,"south":-90,"east":180 });
+    t.deepEqual(result2, globi.getNormalizeAreaCoordinates());
 });
 
 test('getNormalizeAreaCoordinates with 2 arguments should use these as point and create an 4% wide/tall area', function(t) {
@@ -55,7 +55,7 @@ test('getNormalizeAreaCoordinates with 3 arguments should use defaultArea', func
 
     var result = globi.getNormalizeAreaCoordinates(23, 42, -5);
     t.equal(typeof result, 'object');
-    t.deepEqual(result, { "north":90,"west":-180,"south":-90,"east":180 });
+    t.deepEqual(result, globi.getNormalizeAreaCoordinates());
 });
 
 test('getNormalizeAreaCoordinates with 4 arguments should only take ordering into account', function(t) {
@@ -77,5 +77,5 @@ test('getNormalizeAreaCoordinates with 5 or more argument should use defaultArea
 
     var result = globi.getNormalizeAreaCoordinates(1, 2, 3, 4, 5);
     t.equal(typeof result, 'object');
-    t.deepEqual(result, { "north":90,"west":-180,"south":-90,"east":180 });
+    t.deepEqual(result, globi.getNormalizeAreaCoordinates());
 });

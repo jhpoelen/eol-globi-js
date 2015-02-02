@@ -16,6 +16,18 @@ globi.globiData = globiData;
 // bemson - drop-down
 // substack - populate full data in server replies to reduce round trips
 
+/**
+ * Default area for all kinds of location consuming functions
+ *
+ * @type {{north: number, west: number, south: number, east: number}}
+ */
+globi.DEFAULT_AREA = {
+    north: 90,
+    west: -180,
+    south: -90,
+    east: 180
+};
+
 globi.createTaxonInfo = function (scientificName) {
     var ee = new EventEmitter();
     var taxonInfoDiv = document.createElement('div');
@@ -434,12 +446,7 @@ globi.getNormalizeAreaCoordinates = function(coordinates) {
     return normalized;
 
     function getDefaultArea() {
-        return {
-            north: 90,
-            west: -180,
-            south: -90,
-            east: 180
-        };
+        return globi.DEFAULT_AREA;
     }
 };
 
