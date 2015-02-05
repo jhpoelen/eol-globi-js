@@ -65,8 +65,12 @@ var mockData = {
         }
     });
 
-    function InteractionTypeSelector() {
-        this.$element = $('<select class="eol-interaction-type-selector"/>').change(this.onChange);
+    function InteractionTypeSelector(settings) {
+        this.settings = $.extend({
+            change: function(data) { return data; }
+        }, settings);
+
+        this.$element = $('<select class="eol-interaction-type-selector"/>').change($.proxy(this.onChange, this));
         this.options = [];
         this.init();
     }
@@ -142,7 +146,7 @@ var mockData = {
         onChange: function(event) {
             var chosenOption = $(event.target).val();
             if (chosenOption !== this.__EMPTY_OPTION_KEY__) {
-
+                this.settings.change.call(this, chosenOption);
             }
         },
 
