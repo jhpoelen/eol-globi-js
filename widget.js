@@ -1,16 +1,16 @@
 // @todo switch with requested ones
 var mockData = {
     availableInteractionTypes: [
-        { value: "preysOn", 'label': 'preys on' },
-        { value: "preyedUponBy", 'label': 'is preyed upon by' },
-        { value: "parasiteOf", 'label': 'is parasite of' },
-        { value: "hasParasite", 'label': 'has parasite' },
-        { value: "pollinates", 'label': 'pollinates' },
-        { value: "pollinatedBy", 'label': 'is pollinated by' },
-        { value: "pathogenOf", 'label': 'is pathogen Of' },
-        { value: "hasPathogen", 'label': 'has patogen' },
-        { value: "symbiontOf", 'label': 'is symbiont of' },
-        { value: "interactsWith", 'label': 'interacts with' }
+        "preysOn",
+        "preyedUponBy",
+        "parasiteOf",
+        "hasParasite",
+        "pollinates",
+        "pollinatedBy",
+        "pathogenOf",
+        "hasPathogen",
+        "symbiontOf",
+        "interactsWith"
     ]
 };
 
@@ -49,12 +49,20 @@ var mockData = {
             this.typeSelector = new InteractionTypeSelector();
             // @todo switch with requested ones
             mockData.availableInteractionTypes.forEach(function(option) {
-                me.typeSelector.addOption(option.label, option.value);
+                me.typeSelector.addOption(me._camelCaseToRealWords(option), option);
             });
 
             this.$element.append(this.typeSelector.$element);
-        }
+        },
 
+        _camelCaseToRealWords: function(str) {
+            str = str.replace(/([A-Z])/g, function($1){return " "+$1.toLowerCase();});
+            var strParts = str.split(' '), lastPart = strParts[strParts.length - 1];
+            if (['of', 'by'].indexOf(lastPart) >= 0) {
+                strParts.unshift('is');
+            }
+            return strParts.join(' ');
+        }
     });
 
     function InteractionTypeSelector() {
@@ -136,8 +144,6 @@ var mockData = {
             return 0;
         }
     });
-
-
 
     $.fn[pluginName] = function(options) {
         return this.each(function() {
