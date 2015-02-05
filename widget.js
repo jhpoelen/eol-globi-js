@@ -76,9 +76,12 @@ var mockData = {
             this.clear();
         },
 
+        __EMPTY_OPTION_KEY__: '--',
+        __EMPTY_OPTION_LABEL__: '--- choose ---',
+
         clear: function() {
             this.$element.empty();
-            this.addOption(' --- choose ---', '-' );
+            this.addOption(this.__EMPTY_OPTION_LABEL__, this.__EMPTY_OPTION_KEY__ );
         },
 
         disable: function(clear) {
@@ -138,6 +141,9 @@ var mockData = {
 
         onChange: function(event) {
             var chosenOption = $(event.target).val();
+            if (chosenOption !== this.__EMPTY_OPTION_KEY__) {
+
+            }
         },
 
         _compare: function(a, b) {
