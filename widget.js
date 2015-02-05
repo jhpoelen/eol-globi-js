@@ -66,7 +66,7 @@ var mockData = {
     });
 
     function InteractionTypeSelector() {
-        this.$element = $('<select class="eol-interaction-type-selector"/>');
+        this.$element = $('<select class="eol-interaction-type-selector"/>').change(this.onChange);
         this.options = [];
         this.init();
     }
@@ -134,6 +134,10 @@ var mockData = {
             this.options = tempOptions;
             this.render();
             return this;
+        },
+
+        onChange: function(event) {
+            var chosenOption = $(event.target).val();
         },
 
         _compare: function(a, b) {
