@@ -67,32 +67,33 @@ var mockData = {
 
     function InteractionTypeSelector(settings) {
         this.settings = $.extend({
+            options: [],
             change: function(data) { return data; }
         }, settings);
-
-        this.$element = $('<select class="eol-interaction-type-selector"/>').change($.proxy(this.onChange, this));
-        this.options = [];
         this.init();
     }
 
     $.extend(InteractionTypeSelector.prototype, {
         init: function() {
+            var me = this;
+            this.$element = $('<select class="eol-interaction-type-selector"/>').change($.proxy(this.onChange, this));
             this.clear();
+            this.settings.options.forEach(function(option) {
+                me.addOption(option.label, option.value);
+            });
         },
 
         __EMPTY_OPTION_KEY__: '--',
         __EMPTY_OPTION_LABEL__: '--- choose ---',
 
         clear: function() {
+            this.options = [];
             this.$element.empty();
             this.addOption(this.__EMPTY_OPTION_LABEL__, this.__EMPTY_OPTION_KEY__ );
         },
 
         disable: function(clear) {
-            if( clear ) {
-                this.clear();
-                this.options = [];
-            }
+            clear && this.clear();
             this.$element.prop('disabled', 'disabled');
             return this;
         },
@@ -104,7 +105,7 @@ var mockData = {
 
         render: function() {
             var me = this;
-            this.clear();
+            this.$element.empty();
             this.options.sort(this._compare);
             this.options.forEach(function(option) {
                 var optionElement = $('<option value="' + option.value + '">' + option.label + '</option>' );
