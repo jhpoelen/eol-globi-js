@@ -73,10 +73,12 @@ var mockData = {
 
     $.extend(InteractionTypeSelector.prototype, {
         init: function() {
+            this.clear();
         },
 
         clear: function() {
             this.$element.empty();
+            this.addOption(' --- choose ---', '-' );
         },
 
         disable: function(clear) {
