@@ -449,4 +449,25 @@ globi.getNormalizeAreaCoordinates = function(coordinates) {
     }
 };
 
+/**
+ * Simple object extension
+ *
+ * @param {Object} target
+ * @param {Object} source
+ * @returns {Object}
+ */
+globi.extend = function(target, source) {
+    for (var k in source) {
+        if (source.hasOwnProperty(k)) {
+            var value = source[k];
+            if (target.hasOwnProperty(k) && typeof target[k] === "object" && typeof value === "object") {
+                extend(target[k], value);
+            } else {
+                target[k] = value;
+            }
+        }
+    }
+    return target;
+};
+
 module.exports = globi;
