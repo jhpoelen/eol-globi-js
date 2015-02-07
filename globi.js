@@ -712,4 +712,63 @@ globi.extend = function(target, source) {
     return target;
 };
 
+/**
+ * Fetches paginated data by retrieving it chunk by chunk
+ *
+ * @param {Object} settings
+ * @constructor
+ */
+globi.PaginatedDataFetcher = function(settings) {
+    this.settings = globi.extend({
+        offset: 0,
+        limit: 1024,
+        url: '',
+        type: 'json'
+    }, settings);
+    this.init();
+};
+
+globi.extend(globi.PaginatedDataFetcher.prototype, {
+    init: function() {
+        this._data = [];
+    },
+
+    setUrl: function(url) {
+        this.url = url;
+    },
+
+    fetchChunk: function(offset) {
+        var me = this, settings = me.settings;
+        var d = Deferred();
+        $.ajax(settings.url + '&limit=' + settings.limit + '&offset=' + offset + '&type=' + settings.type, {
+            dataType: 'json'
+        }).done(function(response) {
+            d.resolve(response);
+        });
+        return d.promise();
+    },
+
+    poll: function() {
+        var me = this, settings = me.settings;
+        return me.fetchChunk(settings.offset).then(function(reponse) {
+            me._data = me._data.concat(reponse.data);
+            if (reponse.data.length < settings.limit) {
+                return me._data;
+            }
+
+            settings.offset = settings.offset + settings.limit;
+            return me.poll();
+        });
+    },
+
+    fetch: function(callback) {
+        var me = this;
+        me.poll().then(function () {
+            return true;
+        }).done(function () {
+            callback(me._data);
+        });
+    }
+});
+
 module.exports = globi;
