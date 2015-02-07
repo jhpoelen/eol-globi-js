@@ -450,6 +450,248 @@ globi.getNormalizeAreaCoordinates = function(coordinates) {
 };
 
 /**
+ * Callback list handling (incl. trigger control)
+ *
+ * inspired by jQuery#Callbacks
+ *
+ * @param {String|Object} options
+ * @returns {Object}
+ * @constructor
+ */
+globi.Callbacks = function(options) {
+    function createOptions(options) {
+        var object = {}, names = options.split(' ');
+        for (var i = 0, name; name = names[i]; i++) {
+            object[name] = true;
+        }
+        return object;
+    }
+
+    options = typeof options === 'string' ?
+        createOptions(options) :
+        extend({}, options);
+
+    var firing,
+        memory,
+        fired,
+        locked,
+        list = [],
+        queue = [],
+        firingIndex = -1,
+        fire = function() {
+            locked = options.once;
+
+            fired = firing = true;
+            for(; queue.length; firingIndex = -1) {
+                memory = queue.shift();
+                while (++firingIndex < list.length) {
+                    if(list[firingIndex].apply(memory[0], memory[1]) === false &&
+                        options.stopOnFalse) {
+                        firingIndex = list.length;
+                        memory = false;
+                    }
+                }
+            }
+
+            if (!options.memory) {
+                memory = false;
+            }
+
+            firing = false;
+
+            if (locked) {
+                if (memory) {
+                    list = [];
+                } else {
+                    list = '';
+                }
+            }
+        },
+
+        self = {
+            add: function() {
+                if (list) {
+                    if (memory && !firing) {
+                        firingIndex = list.length -1;
+                        queue.push(memory);
+                    }
+
+                    (function add(args) {
+                        for (var i = 0, arg; arg = args[i]; i++) {
+                            if (typeof arg === 'function') {
+                                if (!options.unique || !self.has(arg)) {
+                                    list.push(arg);
+                                }
+                            } else if (arg && arg.length && typeof arg !== 'string') {
+                                add(arg);
+                            }
+                        }
+                    })(arguments);
+
+                    if (memory && !firing) {
+                        fire();
+                    }
+                }
+                return this;
+            },
+
+            remove: function() {
+                for(var i = 0, arg; arg = arguments[i]; i++) {
+                    var index;
+                    while ((index = list.indexOf(arg)) > -1) {
+                        list.splice(index, 1);
+
+                        if (index <= firingIndex) {
+                            firingIndex--;
+                        }
+                    }
+                }
+                return this;
+            },
+
+            has: function(fn) {
+                return fn ?
+                list.indexOf(fn) > -1 :
+                list.length > 0;
+            },
+
+            empty: function() {
+                if (list) {
+                    list = [];
+                }
+                return this;
+            },
+
+            disable: function() {
+                locked = queue = [];
+                list = memory = '';
+                return this;
+            },
+
+            disabled: function() {
+                return !list;
+            },
+
+            lock: function() {
+                locked = queue = [];
+                if (!memory && !firing) {
+                    list = memory = '';
+                }
+                return this;
+            },
+
+            locked: function() {
+                return !!locked;
+            },
+
+            fireWith: function(context, args) {
+                if (!locked) {
+                    args = args || [];
+                    args = [ context, args.slice ? args.slice() : args ];
+                    queue.push(args);
+                    if (!firing) {
+                        fire();
+                    }
+                }
+                return this;
+            },
+
+            fire: function() {
+                self.fireWith(this, arguments);
+                return this;
+            },
+
+            fired: function() {
+                return !!fired;
+            }
+        };
+
+    return self;
+};
+
+/**
+ * Deferred function handling
+ * allows easier asynchronous call management
+ *
+ * heavily inspired by jQuery#Deferred
+ *
+ * @param {Function} [func]
+ * @returns {Object}
+ * @constructor
+ */
+globi.Deferred = function(func) {
+    var tuples = [
+            [ 'resolve', 'done', Callbacks('once memory'), 'resolved' ],
+            [ 'reject', 'fail', Callbacks('once memory'), 'rejected' ],
+            [ 'notify', 'progress', Callbacks('memory') ]
+        ],
+        state = 'pending',
+        promise = {
+            state: function() {
+                return state;
+            },
+            always: function() {
+                deferred.done(arguments).fail(arguments);
+                return this;
+            },
+            then: function() {
+                var fns = arguments;
+                return Deferred(function(newDefer) {
+                    tuples.forEach(function(tuple, i) {
+                        var fn = typeof fns[i] === 'function' && fns[i];
+                        deferred[tuple[1]](function() {
+                            var returned = fn && fn.apply(this, arguments);
+                            if (returned && typeof returned.promise === 'function') {
+                                returned.promise()
+                                    .done(newDefer.resolve)
+                                    .fail(newDefer.reject)
+                                    .progress(newDefer.notify);
+                            } else {
+                                newDefer[tuple[0] + 'With'](
+                                    this === promise ? newDefer.promise() : this,
+                                    fn ? [ returned ] : arguments
+                                );
+                            }
+                        });
+                    });
+                    fns = null;
+                }).promise();
+            },
+            promise: function(obj) {
+                return obj != null ? extend(obj, promise) : promise;
+            }
+        },
+        deferred = {};
+
+    tuples.forEach(function(tuple, i) {
+        var list = tuple[2],
+            stateString = tuple[3];
+
+        promise[tuple[1]] = list.add;
+
+        if (stateString) {
+            list.add(function() {
+                state = stateString;
+            }, tuples[i ^ 1][2].disable, tuples[2][2].lock );
+        }
+
+        deferred[tuple[0]] = function() {
+            deferred[tuple[0] + "With"]( this === deferred ? promise : this, arguments );
+            return this;
+        };
+        deferred[tuple[0] + "With"] = list.fireWith;
+    });
+
+    promise.promise(deferred);
+
+    if (func) {
+        func.call(deferred, deferred);
+    }
+
+    return deferred;
+};
+
+/**
  * Simple object extension
  *
  * @param {Object} target
