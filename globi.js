@@ -469,7 +469,7 @@ globi.Callbacks = function(options) {
 
     options = typeof options === 'string' ?
         createOptions(options) :
-        extend({}, options);
+        globi.extend({}, options);
 
     var firing,
         memory,
@@ -658,7 +658,7 @@ globi.Deferred = function(func) {
                 }).promise();
             },
             promise: function(obj) {
-                return obj != null ? extend(obj, promise) : promise;
+                return obj != null ? globi.extend(obj, promise) : promise;
             }
         },
         deferred = {};
@@ -703,7 +703,7 @@ globi.extend = function(target, source) {
         if (source.hasOwnProperty(k)) {
             var value = source[k];
             if (target.hasOwnProperty(k) && typeof target[k] === "object" && typeof value === "object") {
-                extend(target[k], value);
+                globi.extend(target[k], value);
             } else {
                 target[k] = value;
             }
