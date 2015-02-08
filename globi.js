@@ -621,9 +621,9 @@ globi.Callbacks = function(options) {
  */
 globi.Deferred = function(func) {
     var tuples = [
-            [ 'resolve', 'done', Callbacks('once memory'), 'resolved' ],
-            [ 'reject', 'fail', Callbacks('once memory'), 'rejected' ],
-            [ 'notify', 'progress', Callbacks('memory') ]
+            [ 'resolve', 'done', globi.Callbacks('once memory'), 'resolved' ],
+            [ 'reject', 'fail', globi.Callbacks('once memory'), 'rejected' ],
+            [ 'notify', 'progress', globi.Callbacks('memory') ]
         ],
         state = 'pending',
         promise = {
@@ -636,7 +636,7 @@ globi.Deferred = function(func) {
             },
             then: function() {
                 var fns = arguments;
-                return Deferred(function(newDefer) {
+                return globi.Deferred(function(newDefer) {
                     tuples.forEach(function(tuple, i) {
                         var fn = typeof fns[i] === 'function' && fns[i];
                         deferred[tuple[1]](function() {
@@ -739,7 +739,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
 
     fetchChunk: function(offset) {
         var me = this, settings = me.settings;
-        var d = Deferred();
+        var d = globi.Deferred();
         $.ajax(settings.url + '&limit=' + settings.limit + '&offset=' + offset + '&type=' + settings.type, {
             dataType: 'json'
         }).done(function(response) {
