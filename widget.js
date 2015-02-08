@@ -1,19 +1,3 @@
-// @todo switch with requested ones
-var mockData = {
-    availableInteractionTypes: [
-        "preysOn",
-        "preyedUponBy",
-        "parasiteOf",
-        "hasParasite",
-        "pollinates",
-        "pollinatedBy",
-        "pathogenOf",
-        "hasPathogen",
-        "symbiontOf",
-        "interactsWith"
-    ]
-};
-
 (function($, window, document, undefined) {
     'use strict';
 
@@ -36,23 +20,89 @@ var mockData = {
         this.settings = $.extend({}, defaults, options);
         this._defaults = defaults;
         this._name = pluginName;
+        this.selectedSourceTaxon = null;
+        this.selectedInteractionType = null;
         this.init();
     }
 
     $.extend(Plugin.prototype, {
         init: function() {
+            this.createCreateSourceTaxonSelector();
             this.createInteractionTypesSelector();
+            this.createResultView();
+            this.$element.append(this.sourceTaxonSelector.$element);
+            this.$element.append(this.typeSelector.$element);
+            this.$element.append(this.resultView);
+        },
+
+        createCreateSourceTaxonSelector: function() {
+            var me = this;
+
+            this.sourceTaxonSelector = new SourceTaxonSelector({
+                selected: { callback: me.updateTypeSelector, context: me }
+            });
         },
 
         createInteractionTypesSelector: function() {
             var me = this;
-            this.typeSelector = new InteractionTypeSelector();
-            // @todo switch with requested ones
-            mockData.availableInteractionTypes.forEach(function(option) {
-                me.typeSelector.addOption(me._camelCaseToRealWords(option), option);
+            this.typeSelector = new InteractionTypeSelector({
+                change: { callback: me.retrieveDataForSourceAndTypeSelection, context: me }
             });
+            this.typeSelector.disable();
+        },
 
-            this.$element.append(this.typeSelector.$element);
+        updateTypeSelector: function(sourceTaxon) {
+            this.selectedSourceTaxon = sourceTaxon;
+            this.typeSelector.disable(true);
+            this.clearResultView();
+            this.retrieveDataForTypeSelection(sourceTaxon);
+        },
+
+        retrieveDataForTypeSelection: function(sourceTaxon) {
+            var me = this;
+
+            globiData.findInteractionTypes(
+                {"taxonName": sourceTaxon},
+                {
+                    callback: function(data) {
+                        var me = this;
+                        $.each(data, function(key) { me.typeSelector.addOption(me._camelCaseToRealWords(key), key); });
+                        me.typeSelector.enable();
+                    },
+                    context: me
+                }
+            );
+        },
+
+        retrieveDataForSourceAndTypeSelection: function(interactionType) {
+            var me = this, sourceTaxon = me.selectedSourceTaxon;
+            this.selectedInteractionType = interactionType;
+
+            globiData.findSpeciesInteractions(
+                {"sourceTaxonScientificName": sourceTaxon, "interactionType": interactionType},
+                { callback: me.showDataForSourceAndTypeSelection, context: me }
+            );
+        },
+
+        createResultView: function() {
+            this.resultView = $('<div id="results" />');
+        },
+
+        clearResultView: function() {
+            this.resultView.empty();
+        },
+
+        showDataForSourceAndTypeSelection: function(data) {
+            this.clearResultView();
+            if (data.length > 0) {
+                var list = $('<ul/>');
+                data.forEach(function (item) {
+                    list.append('<li>' + item.target.name + '</li>');
+                });
+                this.resultView.append(list);
+            } else {
+                this.resultView.html('Empty resultset');
+            }
         },
 
         _camelCaseToRealWords: function(str) {
@@ -65,10 +115,120 @@ var mockData = {
         }
     });
 
+    function SourceTaxonSelector(settings) {
+        this.settings = $.extend({
+            idPrefix: 'source-taxon-',
+            selected: {
+                callback: function() {},
+                context: this
+            }
+        }, settings);
+        this.init();
+    }
+
+    $.extend(SourceTaxonSelector.prototype, {
+        init: function() {
+            var me = this;
+            this.$element = $('<div id="' + this.settings.idPrefix + 'selector-wrapper"/>');
+            this._data = [];
+
+            this.dataFetcher = new globi.PaginatedDataFetcher({
+                url: 'http://api.globalbioticinteractions.org/taxon?bbox=-180,-90,180,90&field=taxon_path&field=taxon_path_ids&field=taxon_common_names'
+            });
+
+            this.initUi();
+            this.dataFetcher.fetch(function(data) {
+                me.parseData(data);
+                me.processUi();
+                me.render();
+            });
+        },
+
+        initUi: function() {
+            this.$element.append('<div id="' + this.settings.idPrefix + 'splash">Data load ... please wait.</div>')
+        },
+
+        processUi: function() {
+            this.$element.empty();
+            this.$element.append('<div><input size="50" id="' + this.settings.idPrefix + 'input" /></div>');
+            this.$element.append('<div id="' + this.settings.idPrefix + 'id" />');
+            this.$element.append('<div id="' + this.settings.idPrefix + 'name" />');
+            this.$element.append('<div><img id="' + this.settings.idPrefix + 'image" width="100px" src="" alt=""/></div>');
+        },
+
+        render: function() {
+            var me = this,
+                settings = me.settings,
+                inputSelector = '#' + settings.idPrefix + 'input',
+                nameSelector = '#' + settings.idPrefix + 'name',
+                idSelector = '#' + settings.idPrefix + 'id',
+                imageSelector = '#' + settings.idPrefix + 'image';
+            $( inputSelector ).autocomplete({
+                minLength: 3,
+                source: me._data,
+                focus: function( event, ui ) {
+                    $( inputSelector ).val( ui.item.label );
+                    return false;
+                },
+                select: function( event, ui ) {
+                    $(inputSelector).val(ui.item.label );
+                    $(nameSelector).html( ui.item.name );
+                    $(idSelector).html( ui.item.value );
+                    $(imageSelector).attr( "src", '' );
+                    globiData.findThumbnailById(ui.item.value, function(thumbnailUrl) {
+                        $(imageSelector).attr( "src", thumbnailUrl );
+                    });
+                    setTimeout(settings.selected.callback.call(settings.selected.context, ui.item.name), 0);
+                    return false;
+                }
+            }).autocomplete( "instance" )._renderItem = function( ul, item ) {
+                return $( "<li>" )
+                    .append( "<a>" + item.label + "<br>" + item.value + "</a>" )
+                    .appendTo( ul );
+            };
+        },
+
+        parseData: function(data) {
+            var me = this;
+            var idCache = [];
+            data.forEach(function(item) {
+                var commonNames = globiData.mapCommonNameList(item[0]),
+                    commonName = (commonNames['count'] > 0 && commonNames['en']) ? commonNames['en'] : '';
+                if (item[1] && item[2]) {
+                    var paths = item[1].split('|').map(function(item) { return item.trim(); }), pathList = [];
+                    paths.forEach(function(pathPart) {
+                        if (pathPart !== '') {
+                            pathList.push(pathPart);
+                        }
+                    });
+                    var ids = item[2].split('|').map(function(item) { return item.trim(); }), idList = [];
+                    ids.forEach(function(idPart) {
+                        if (idPart !== '') {
+                            idList.push(idPart);
+                        }
+                    });
+                    for (var i = 0, len = pathList.length; i < len; i++) {
+                        if (idCache.indexOf(idList[i]) === -1 ) {
+                            me._data.push({
+                                'name': pathList[i],
+                                'label': pathList[i] + ((i === len - 1) && (commonName !== '') ? ' (' + commonName + ')' : ''),
+                                'value': idList[i]
+                            });
+                            idCache.push(idList[i]);
+                        }
+                    }
+                }
+            });
+        }
+    });
+
     function InteractionTypeSelector(settings) {
         this.settings = $.extend({
             options: [],
-            change: function(data) { return data; }
+            change: {
+                callback: function() {},
+                context: this
+            }
         }, settings);
         this.init();
     }
@@ -147,7 +307,7 @@ var mockData = {
         onChange: function(event) {
             var chosenOption = $(event.target).val();
             if (chosenOption !== this.__EMPTY_OPTION_KEY__) {
-                this.settings.change.call(this, chosenOption);
+                this.settings.change.callback.call(this.settings.change.context, chosenOption);
             }
         },
 
@@ -169,4 +329,5 @@ var mockData = {
             }
         });
     };
+
 })(jQuery, window, document);
