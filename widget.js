@@ -150,7 +150,7 @@
 
         processUi: function() {
             this.$element.empty();
-            this.$element.append('<div><input size="50" id="' + this.settings.idPrefix + 'input" /></div>');
+            this.$element.append('<div><input size="50" placeholder="Type in a taxon name" id="' + this.settings.idPrefix + 'input" /></div>');
             this.$element.append('<div id="' + this.settings.idPrefix + 'id" />');
             this.$element.append('<div id="' + this.settings.idPrefix + 'name" />');
             this.$element.append('<div><img id="' + this.settings.idPrefix + 'image" width="100px" src="" alt=""/></div>');
