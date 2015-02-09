@@ -803,7 +803,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
 
     $.extend(Plugin.prototype, {
         init: function() {
-            this.createCreateSourceTaxonSelector();
+            this.createSourceTaxonSelector();
             this.createInteractionTypesSelector();
             this.createResultView();
             this.$element.append(this.sourceTaxonSelector.$element);
@@ -811,7 +811,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
             this.$element.append(this.resultView);
         },
 
-        createCreateSourceTaxonSelector: function() {
+        createSourceTaxonSelector: function() {
             var me = this;
 
             this.sourceTaxonSelector = new SourceTaxonSelector({
@@ -838,7 +838,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
             var me = this;
 
             globiData.findInteractionTypes(
-                {"taxonName": sourceTaxon},
+                [sourceTaxon],
                 {
                     callback: function(data) {
                         var me = this;
@@ -10116,18 +10116,13 @@ globiData.sendRequest = function(req, callback) {
 };
 
 globiData.findInteractionTypes = function (search, callback) {
-    var urlQuery = '', alreadySet = false;
     if (arguments.length === 1) {
         callback = search;
-        search = {};
+        search = [];
     }
 
-    ['taxonId', 'taxonName'].forEach(function(queryPart) {
-        if (search[queryPart] && !alreadySet) {
-            urlQuery = '?' + queryPart + encodeURIComponent(search[queryPart]);
-            alreadySet = true;
-        }
-    });
+    search.map(function(item) {return 'taxon=' + encodeURIComponent(item); });
+    var urlQuery = search.length > 0 ? '?' + search.join('&') + '&type=json' : '';
 
     var req = createReq();
     req.open('GET', urlPrefix + '/interactionTypes' + urlQuery, true);

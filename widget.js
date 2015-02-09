@@ -27,7 +27,7 @@
 
     $.extend(Plugin.prototype, {
         init: function() {
-            this.createCreateSourceTaxonSelector();
+            this.createSourceTaxonSelector();
             this.createInteractionTypesSelector();
             this.createResultView();
             this.$element.append(this.sourceTaxonSelector.$element);
@@ -35,7 +35,7 @@
             this.$element.append(this.resultView);
         },
 
-        createCreateSourceTaxonSelector: function() {
+        createSourceTaxonSelector: function() {
             var me = this;
 
             this.sourceTaxonSelector = new SourceTaxonSelector({
@@ -62,7 +62,7 @@
             var me = this;
 
             globiData.findInteractionTypes(
-                {"taxonName": sourceTaxon},
+                [sourceTaxon],
                 {
                     callback: function(data) {
                         var me = this;

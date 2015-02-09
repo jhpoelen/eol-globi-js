@@ -802,7 +802,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
 
     $.extend(Plugin.prototype, {
         init: function() {
-            this.createCreateSourceTaxonSelector();
+            this.createSourceTaxonSelector();
             this.createInteractionTypesSelector();
             this.createResultView();
             this.$element.append(this.sourceTaxonSelector.$element);
@@ -810,7 +810,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
             this.$element.append(this.resultView);
         },
 
-        createCreateSourceTaxonSelector: function() {
+        createSourceTaxonSelector: function() {
             var me = this;
 
             this.sourceTaxonSelector = new SourceTaxonSelector({
@@ -837,7 +837,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
             var me = this;
 
             globiData.findInteractionTypes(
-                {"taxonName": sourceTaxon},
+                [sourceTaxon],
                 {
                     callback: function(data) {
                         var me = this;
