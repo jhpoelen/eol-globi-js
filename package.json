@@ -8,7 +8,8 @@
     },
     "dependencies": {
         "globi-data": "~0.0.28",
-		    "d3": "~3.2.5"
+		    "d3": "~3.2.5",
+        "jquery": ">=2.1"
     },
     "devDependencies": {
         "tape": "~1.0.4"

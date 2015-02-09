@@ -1,11 +1,13 @@
 var d3 = require('d3');
 var globiData = require('globi-data');
 var EventEmitter = require('events').EventEmitter;
+var jQuery = require('jquery');
 
 
 var globi = {};
 globi.d3 = d3;
 globi.globiData = globiData;
+globi.jQuery = jQuery;
 
 // comments from code workshop 1 Aug 2013
 // substack - bin-fields to use app /utils
@@ -771,7 +773,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
     }
 });
 
-(function($, window, document, undefined) {
+(function($, undefined) {
     'use strict';
 
     var pluginName = 'interactions',
@@ -1103,7 +1105,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         });
     };
 
-})(jQuery, window, document);
+})(globi.jQuery);
 
 
 module.exports = globi;

@@ -1,4 +1,4 @@
-(function($, window, document, undefined) {
+(function($, undefined) {
     'use strict';
 
     var pluginName = 'interactions',
@@ -330,4 +330,4 @@
         });
     };
 
-})(jQuery, window, document);
+})(window.jQuery);
