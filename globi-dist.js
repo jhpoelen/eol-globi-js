@@ -10121,7 +10121,7 @@ globiData.findInteractionTypes = function (search, callback) {
         search = [];
     }
 
-    search.map(function(item) {return 'taxon=' + encodeURIComponent(item); });
+    search = search.map(function(item) {return 'taxon=' + encodeURIComponent(item); });
     var urlQuery = search.length > 0 ? '?' + search.join('&') + '&type=json' : '';
 
     var req = createReq();
