@@ -27,6 +27,10 @@
 
     $.extend(Plugin.prototype, {
         init: function() {
+            this.$element.empty();
+            this.$element.css({
+                padding: '20px'
+            });
             this.createSourceTaxonSelector();
             this.createInteractionTypesSelector();
             this.createResultView();
@@ -35,11 +39,17 @@
             this.$element.append(this.resultView);
         },
 
+        update: function(bboxString) {
+            this.settings.bboxString = bboxString;
+            this.init();
+        },
+
         createSourceTaxonSelector: function() {
             var me = this;
 
             this.sourceTaxonSelector = new SourceTaxonSelector({
-                selected: { callback: me.updateTypeSelector, context: me }
+                selected: { callback: me.updateTypeSelector, context: me },
+                bboxString: me.settings.bboxString
             });
         },
 
@@ -94,12 +104,18 @@
 
         showDataForSourceAndTypeSelection: function(data) {
             this.clearResultView();
+            var odd = true;
             if (data.length > 0) {
-                var list = $('<ul/>');
+                var table = $('<table class="interactions-result"/>');
                 data.forEach(function (item) {
-                    list.append('<li>' + item.target.name + '</li>');
+                    table.append(
+                        '<tr class="' + (odd ? 'odd' : 'even') + '"><td>' + item.source.name + '</td>' +
+                        '<td>' + item.type + '</td>' +
+                        '<td>' + item.target.name + '</td>' +
+                        '</tr>');
+                    odd = !odd;
                 });
-                this.resultView.append(list);
+                this.resultView.append(table);
             } else {
                 this.resultView.html('Empty resultset');
             }
@@ -132,10 +148,22 @@
             this.$element = $('<div id="' + this.settings.idPrefix + 'selector-wrapper"/>');
             this._data = [];
 
-            this.dataFetcher = new globi.PaginatedDataFetcher({
-                url: 'http://api.globalbioticinteractions.org/taxon?bbox=-180,-90,180,90&field=taxon_path&field=taxon_path_ids&field=taxon_common_names'
-            });
+            this.process();
+        },
 
+        process: function() {
+            var me = this,
+                url = 'http://api.globalbioticinteractions.org/taxon?' + me.settings.bboxString + '&field=taxon_path&field=taxon_path_ids&field=taxon_common_names';
+
+            if (!this.dataFetcher) {
+                this.dataFetcher = new globi.PaginatedDataFetcher({
+                    url: url
+                });
+            } else {
+                this.dataFetcher.settings.url = url;
+            }
+
+            this.$element.empty();
             this.initUi();
             this.dataFetcher.fetch(function(data) {
                 me.parseData(data);
@@ -144,16 +172,23 @@
             });
         },
 
+        update: function(bboxString) {
+            this.settings.bboxString = bboxString;
+            this.process();
+        },
+
         initUi: function() {
             this.$element.append('<div id="' + this.settings.idPrefix + 'splash">Data load ... please wait.</div>')
         },
 
         processUi: function() {
             this.$element.empty();
-            this.$element.append('<div><input size="50" placeholder="Type in a taxon name" id="' + this.settings.idPrefix + 'input" /></div>');
-            this.$element.append('<div id="' + this.settings.idPrefix + 'id" />');
-            this.$element.append('<div id="' + this.settings.idPrefix + 'name" />');
-            this.$element.append('<div><img id="' + this.settings.idPrefix + 'image" width="100px" src="" alt=""/></div>');
+            this.$element.append('<div style="margin-bottom: 10px;"><input size="50"  placeholder="Type in a taxon name" id="' + this.settings.idPrefix + 'input" /></div>');
+            this.$element.append('<div style="width: 100px; float: left; margin-right: 10px;"><img id="' + this.settings.idPrefix + 'image" width="100px" src="" alt=""/></div>');
+            var wrapper = this.$element.append('<div style="float: left;"/>');
+            wrapper.append('<div style="font-size: 12px;" id="' + this.settings.idPrefix + 'id" />');
+            wrapper.append('<div style="font-size: 12px;" id="' + this.settings.idPrefix + 'name" />');
+            this.$element.append('<div style="margin-top:10px;clear: left;"/>');
         },
 
         render: function() {
@@ -330,4 +365,4 @@
         });
     };
 
-})(window.jQuery);
+})(globi.jQuery);
