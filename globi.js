@@ -733,6 +733,7 @@ globi.PaginatedDataFetcher = function(settings) {
 globi.extend(globi.PaginatedDataFetcher.prototype, {
     init: function() {
         this._data = [];
+        this._columns = [];
     },
 
     setUrl: function(url) {
@@ -754,6 +755,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         var me = this, settings = me.settings;
         return me.fetchChunk(settings.offset).then(function(reponse) {
             me._data = me._data.concat(reponse.data);
+            me._columns = reponse.columns;
             if (reponse.data.length < settings.limit) {
                 return me._data;
             }
@@ -768,7 +770,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         me.poll().then(function () {
             return true;
         }).done(function () {
-            callback(me._data);
+            callback({ columns: me._columns, data: me._data });
         });
     }
 });
@@ -1001,17 +1003,18 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         parseData: function(data) {
             var me = this;
             var idCache = [];
-            data.forEach(function(item) {
-                var commonNames = globiData.mapCommonNameList(item[0]),
+            data = globi.ResponseMapper(data);
+            data().forEach(function(item) {
+                var commonNames = globiData.mapCommonNameList(item['taxon_common_names']),
                     commonName = (commonNames['count'] > 0 && commonNames['en']) ? commonNames['en'] : '';
-                if (item[1] && item[2]) {
-                    var paths = item[1].split('|').map(function(item) { return item.trim(); }), pathList = [];
+                if (item['taxon_path'] && item['taxon_path_ids']) {
+                    var paths = item['taxon_path'].split('|').map(function(item) { return item.trim(); }), pathList = [];
                     paths.forEach(function(pathPart) {
                         if (pathPart !== '') {
                             pathList.push(pathPart);
                         }
                     });
-                    var ids = item[2].split('|').map(function(item) { return item.trim(); }), idList = [];
+                    var ids = item['taxon_path_ids'].split('|').map(function(item) { return item.trim(); }), idList = [];
                     ids.forEach(function(idPart) {
                         if (idPart !== '') {
                             idList.push(idPart);
@@ -1142,5 +1145,36 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
 
 })(globi.jQuery);
 
+globi.ResponseMapper = function() {
+    var rawData = arguments.length === 1 ? arguments[0] : {},
+        isArray = Array.isArray(rawData),
+        rowNames = rawData['columns'] ? rawData['columns'] : [],
+        data = rawData['data'] ? rawData['data'] : [],
+        dataLength = isArray ? rawData.length : data.length;
+
+    return function() {
+        if (arguments.length === 0) {
+            if (isArray) {
+                return rawData;
+            }
+            return data.map(function(item) { return RowMapper(item, rowNames)});
+        }
+        if (arguments.length === 1 && typeof arguments[0] === 'number' && arguments[0] < dataLength) {
+            if (isArray) {
+                return rawData[arguments[0]];
+            }
+            return RowMapper(data[arguments[0]], rowNames);
+        }
+    };
+
+    function RowMapper(data, names) {
+        var row = {}, value;
+        for (var i = 0, name; name = names[i]; i++) {
+            value = data[i] ? data[i] : null;
+            row[name] = value;
+        }
+        return row;
+    }
+};
 
 module.exports = globi;
