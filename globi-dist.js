@@ -929,7 +929,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
 
         process: function() {
             var me = this,
-                url = 'http://api.globalbioticinteractions.org/taxon?' + me.settings.bboxString + '&field=taxon_path&field=taxon_path_ids&field=taxon_common_names';
+                url = 'http://api.globalbioticinteractions.org/taxon?' + me.settings.bboxString + '&field=taxon_common_names&field=taxon_path&field=taxon_path_ids';
 
             if (!this.dataFetcher) {
                 this.dataFetcher = new globi.PaginatedDataFetcher({
