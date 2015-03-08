@@ -799,6 +799,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         this.selectedSourceTaxon = null;
         this.selectedTargetTaxon = null;
         this.selectedInteractionType = null;
+        this.dataFetcher = null;
         this.init();
     }
 
@@ -873,8 +874,11 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         },
 
         retrieveData: function() {
-            var searchHash = {},
-                me = this;
+            var searchHash = {
+                    'resultType': 'json'
+                },
+                me = this,
+                url;
 
             if (this.selectedSourceTaxon !== null) {
                 searchHash['sourceTaxa'] = [this.selectedSourceTaxon];
@@ -885,12 +889,20 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
             if (this.selectedInteractionType !== null) {
                 searchHash['interactionType'] = this.selectedInteractionType;
             }
-            console.log(searchHash);
 
-            globiData.findSpeciesInteractions(
-                searchHash,
-                { callback: me.showData, context: me }
-            );
+            url = globiData.urlForTaxonInteractionQuery(searchHash);
+
+            if (!this.dataFetcher) {
+                this.dataFetcher = new globi.PaginatedDataFetcher({
+                    url: url
+                });
+            } else {
+                this.dataFetcher.settings.url = url;
+            }
+
+            this.dataFetcher.fetch(function(data) {
+                me.showData(globi.ResponseMapper(data)());
+            });
         },
 
         retrieveDataForTypeSelection: function() {
@@ -924,9 +936,9 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
                 var table = $('<table class="interactions-result"/>');
                 data.forEach(function (item) {
                     table.append(
-                        '<tr class="' + (odd ? 'odd' : 'even') + '"><td>' + item.source.name + '</td>' +
-                        '<td>' + item.type + '</td>' +
-                        '<td>' + item.target.name + '</td>' +
+                        '<tr class="' + (odd ? 'odd' : 'even') + '"><td>' + item.source_taxon_name + '</td>' +
+                        '<td>' + item.interaction_type + '</td>' +
+                        '<td>' + item.target_taxon_name + '</td>' +
                         '</tr>');
                     odd = !odd;
                 });
