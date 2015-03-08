@@ -723,8 +723,7 @@ globi.PaginatedDataFetcher = function(settings) {
     this.settings = globi.extend({
         offset: 0,
         limit: 1024,
-        url: '',
-        type: 'json'
+        url: ''
     }, settings);
     this.init();
 };
@@ -742,7 +741,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
     fetchChunk: function(offset) {
         var me = this, settings = me.settings;
         var d = globi.Deferred();
-        $.ajax(settings.url + '&limit=' + settings.limit + '&offset=' + offset + '&type=' + settings.type, {
+        $.ajax(settings.url + '&limit=' + settings.limit + '&offset=' + offset, {
             dataType: 'json'
         }).done(function(response) {
             d.resolve(response);
@@ -983,7 +982,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
 
         process: function() {
             var me = this,
-                url = 'http://api.globalbioticinteractions.org/taxon?' + me.settings.bboxString + '&field=taxon_common_names&field=taxon_path&field=taxon_path_ids';
+                url = 'http://api.globalbioticinteractions.org/taxon?type=json&' + me.settings.bboxString + '&field=taxon_common_names&field=taxon_path&field=taxon_path_ids';
 
             if (!this.dataFetcher) {
                 this.dataFetcher = new globi.PaginatedDataFetcher({
