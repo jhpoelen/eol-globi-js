@@ -4,7 +4,6 @@ var globiData = _dereq_('globi-data');
 var EventEmitter = _dereq_('events').EventEmitter;
 var jQuery = _dereq_('jquery');
 
-
 var globi = {};
 globi.d3 = d3;
 globi.globiData = globiData;
@@ -799,6 +798,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         this._defaults = defaults;
         this._name = pluginName;
         this.selectedSourceTaxon = null;
+        this.selectedTargetTaxon = null;
         this.selectedInteractionType = null;
         this.init();
     }
@@ -811,9 +811,11 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
             });
             this.createSourceTaxonSelector();
             this.createInteractionTypesSelector();
+            this.createTargetTaxonSelector();
             this.createResultView();
             this.$element.append(this.sourceTaxonSelector.$element);
             this.$element.append(this.typeSelector.$element);
+            this.$element.append(this.targetTaxonSelector.$element);
             this.$element.append(this.resultView);
         },
 
@@ -825,8 +827,25 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         createSourceTaxonSelector: function() {
             var me = this;
 
-            this.sourceTaxonSelector = new SourceTaxonSelector({
-                selected: { callback: me.updateTypeSelector, context: me },
+            this.sourceTaxonSelector = new TaxonSelector({
+                type: 'sourceTaxon',
+                idPrefix: 'source-taxon-',
+                placeholder: 'Source Taxon ...',
+                hintText: 'Source: Type in a taxon name',
+                selected: { callback: me.updateQueryParameter, context: me },
+                bboxString: me.settings.bboxString
+            });
+        },
+
+        createTargetTaxonSelector: function() {
+            var me = this;
+
+            this.targetTaxonSelector = new TaxonSelector({
+                type: 'targetTaxon',
+                idPrefix: 'target-taxon-',
+                placeholder: 'Target Taxon ...',
+                hintText: 'Target: Type in a taxon name',
+                selected: { callback: me.updateQueryParameter, context: me },
                 bboxString: me.settings.bboxString
             });
         },
@@ -834,23 +853,52 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         createInteractionTypesSelector: function() {
             var me = this;
             this.typeSelector = new InteractionTypeSelector({
-                change: { callback: me.retrieveDataForSourceAndTypeSelection, context: me }
+                change: { callback: me.updateQueryParameter, context: me }
             });
-            this.typeSelector.disable();
+            me.retrieveDataForTypeSelection();
         },
 
-        updateTypeSelector: function(sourceTaxon) {
-            this.selectedSourceTaxon = sourceTaxon;
-            this.typeSelector.disable(true);
-            this.clearResultView();
-            this.retrieveDataForTypeSelection(sourceTaxon);
+        updateQueryParameter: function(value, queryParameterType) {
+            switch (queryParameterType) {
+                case 'sourceTaxon':
+                    this.selectedSourceTaxon = value;
+                    break;
+                case 'targetTaxon':
+                    this.selectedTargetTaxon = value;
+                    break;
+                case 'interactionType':
+                    this.selectedInteractionType = value;
+                    break;
+            }
+            this.retrieveData();
         },
 
-        retrieveDataForTypeSelection: function(sourceTaxon) {
+        retrieveData: function() {
+            var searchHash = {},
+                me = this;
+
+            if (this.selectedSourceTaxon !== null) {
+                searchHash['sourceTaxa'] = [this.selectedSourceTaxon];
+            }
+            if (this.selectedTargetTaxon !== null) {
+                searchHash['targetTaxa'] = [this.selectedTargetTaxon];
+            }
+            if (this.selectedInteractionType !== null) {
+                searchHash['interactionType'] = this.selectedInteractionType;
+            }
+            console.log(searchHash);
+
+            globiData.findSpeciesInteractions(
+                searchHash,
+                { callback: me.showData, context: me }
+            );
+        },
+
+        retrieveDataForTypeSelection: function() {
             var me = this;
 
             globiData.findInteractionTypes(
-                [sourceTaxon],
+                [],
                 {
                     callback: function(data) {
                         var me = this;
@@ -862,16 +910,6 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
             );
         },
 
-        retrieveDataForSourceAndTypeSelection: function(interactionType) {
-            var me = this, sourceTaxon = me.selectedSourceTaxon;
-            this.selectedInteractionType = interactionType;
-
-            globiData.findSpeciesInteractions(
-                {"sourceTaxonScientificName": sourceTaxon, "interactionType": interactionType},
-                { callback: me.showDataForSourceAndTypeSelection, context: me }
-            );
-        },
-
         createResultView: function() {
             this.resultView = $('<div id="results" />');
         },
@@ -880,7 +918,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
             this.resultView.empty();
         },
 
-        showDataForSourceAndTypeSelection: function(data) {
+        showData: function(data) {
             this.clearResultView();
             var odd = true;
             if (data.length > 0) {
@@ -909,9 +947,12 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         }
     });
 
-    function SourceTaxonSelector(settings) {
+    function TaxonSelector(settings) {
         this.settings = $.extend({
-            idPrefix: 'source-taxon-',
+            type: 'taxon',
+            idPrefix: 'taxon-',
+            placeholder: 'Taxon ...',
+            hintText: 'Type in a taxon name',
             selected: {
                 callback: function() {},
                 context: this
@@ -920,7 +961,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         this.init();
     }
 
-    $.extend(SourceTaxonSelector.prototype, {
+    $.extend(TaxonSelector.prototype, {
         init: function() {
             var me = this;
             this.$element = $('<div id="' + this.settings.idPrefix + 'selector-wrapper"/>');
@@ -962,7 +1003,6 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         processUi: function() {
             this.$element.empty();
             this.$element.append('<div style="margin-bottom: 10px;"><input size="50"  placeholder="Type in a taxon name" id="' + this.settings.idPrefix + 'input" /></div>');
-            this.$element.append('<div style="width: 100px; float: left; margin-right: 10px;"><img id="' + this.settings.idPrefix + 'image" width="100px" src="" alt=""/></div>');
             var wrapper = this.$element.append('<div style="float: left;"/>');
             wrapper.append('<div style="font-size: 12px;" id="' + this.settings.idPrefix + 'id" />');
             wrapper.append('<div style="font-size: 12px;" id="' + this.settings.idPrefix + 'name" />');
@@ -972,33 +1012,26 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         render: function() {
             var me = this,
                 settings = me.settings,
-                inputSelector = '#' + settings.idPrefix + 'input',
-                nameSelector = '#' + settings.idPrefix + 'name',
-                idSelector = '#' + settings.idPrefix + 'id',
-                imageSelector = '#' + settings.idPrefix + 'image';
-            $( inputSelector ).autocomplete({
-                minLength: 3,
-                source: me._data,
-                focus: function( event, ui ) {
-                    $( inputSelector ).val( ui.item.label );
-                    return false;
+                inputSelector = '#' + settings.idPrefix + 'input';
+            $( inputSelector).tokenInput(me._data,{
+                placeholder: settings.placeholder,
+                hintText: settings.hintText,
+                propertyToSearch: "label",
+                preventDuplicates: true,
+                tokenValue: 'value',
+                tokenLimit: 1,
+                onAdd: function(item) {
+                    //var tokens = $(inputSelector).tokenInput("get");
+                    setTimeout(settings.selected.callback.call(settings.selected.context, item.name, settings.type), 0);
                 },
-                select: function( event, ui ) {
-                    $(inputSelector).val(ui.item.label );
-                    $(nameSelector).html( ui.item.name );
-                    $(idSelector).html( ui.item.value );
-                    $(imageSelector).attr( "src", '' );
-                    globiData.findThumbnailById(ui.item.value, function(thumbnailUrl) {
-                        $(imageSelector).attr( "src", thumbnailUrl );
-                    });
-                    setTimeout(settings.selected.callback.call(settings.selected.context, ui.item.name), 0);
-                    return false;
+                onDelete: function(item) {
+                    //var tokens = $(inputSelector).tokenInput("get");
+                    setTimeout(settings.selected.callback.call(settings.selected.context, null, settings.type), 0);
                 }
-            }).autocomplete( "instance" )._renderItem = function( ul, item ) {
-                return $( "<li>" )
-                    .append( "<a>" + item.label + "<br>" + item.value + "</a>" )
-                    .appendTo( ul );
-            };
+                //,
+                //resultsFormatter: function(item){ return "<li>" + "<img src='" + item.url + "' title='" + item.first_name + " " + item.last_name + "' height='25px' width='25px' />" + "<div style='display: inline-block; padding-left: 10px;'><div class='full_name'>" + item.first_name + " " + item.last_name + "</div><div class='email'>" + item.email + "</div></div></li>" },
+                //tokenFormatter: function(item) { return "<li><p>" + item.first_name + " <b style='color: red'>" + item.last_name + "</b></p></li>" }
+            });
         },
 
         parseData: function(data) {
@@ -1119,9 +1152,9 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         },
 
         onChange: function(event) {
-            var chosenOption = $(event.target).val();
-            if (chosenOption !== this.__EMPTY_OPTION_KEY__) {
-                this.settings.change.callback.call(this.settings.change.context, chosenOption);
+            var option = $(event.target).val();
+            if (option !== this.__EMPTY_OPTION_KEY__) {
+                this.settings.change.callback.call(this.settings.change.context, option, 'interactionType');
             }
         },
 
@@ -10002,40 +10035,36 @@ var globiData = {};
 
 var urlPrefix = 'http://api.globalbioticinteractions.org';
 
-globiData.urlForFindCloseTaxonMatches = function (name) {
-    return urlPrefix + '/findCloseMatchesForTaxon/' + encodeURIComponent(name);
-};
-
-globiData.urlForTaxonInteractionQuery = function (search) {
-    var uri = urlPrefix;
-
-    if (search.sourceTaxonScientificName) {
-        uri = uri + '/taxon/' + encodeURIComponent(search.sourceTaxonScientificName) + '/' + search.interactionType;
-        if (search.targetTaxonScientificName) {
-            uri = uri + '/' + encodeURIComponent(search.targetTaxonScientificName);
-        }
-    } else {
-        uri = uri + '/interaction';
-    }
-
+var addQueryParams = function(uri, search) {
     var locationQuery = function (location) {
         var locationQuery = '';
         for (var elem in location) {
-            locationQuery += elem + '=' + location[elem] + '&';
+            locationQuery +=  '&' + elem + '=' + location[elem];
         }
         return locationQuery;
     };
 
-    uri = uri + '?type=json.v2';
     if (search.location) {
-        uri = uri + '&' + locationQuery(search.location);
+        uri = uri + locationQuery(search.location);
+    }
+
+    if (search.includeObservations) {
+        uri = uri + '&includeObservations=true';
+    }
+
+    if (search.referenceId) {
+        uri = uri + '&referenceId=' + encodeURIComponent(search.referenceId);
+    }
+
+    if (search.interactionType) {
+        uri = uri + '&interactionType=' + encodeURIComponent(search.interactionType);
     }
 
     function addTaxonQuery(taxonNames, elemName) {
         if (taxonNames) {
             var taxonQuery = '';
             for (var name in taxonNames) {
-                taxonQuery += elemName + '=' + encodeURIComponent(taxonNames[name]) + '&';
+                taxonQuery += '&' + elemName + '=' + encodeURIComponent(taxonNames[name]);
             }
             uri = uri + taxonQuery;
         }
@@ -10044,7 +10073,33 @@ globiData.urlForTaxonInteractionQuery = function (search) {
     addTaxonQuery(search.sourceTaxa, 'sourceTaxon');
     addTaxonQuery(search.targetTaxa, 'targetTaxon');
 
+    if (search.source) {
+        uri = uri + 'source=' + encodeURIComponent(search.source);
+    }
     return uri;
+};
+
+globiData.urlForFindCloseTaxonMatches = function (name) {
+    return urlPrefix + '/findCloseMatchesForTaxon/' + encodeURIComponent(name);
+};
+
+globiData.urlForTaxonInteractionQuery = function (search) {
+    var uri = urlPrefix;
+
+    if (search.sourceTaxonScientificName) {
+        uri = uri + '/taxon/' + encodeURIComponent(search.sourceTaxonScientificName);
+        if (search.interactionType) {
+            uri = uri + '/' + encodeURIComponent(search.interactionType);
+            delete search.interactionType;
+        }
+        if (search.targetTaxonScientificName) {
+            uri = uri + '/' + encodeURIComponent(search.targetTaxonScientificName);
+        }
+    } else {
+        uri = uri + '/interaction';
+    }
+    uri = uri + '?type=json.v2';
+    return addQueryParams(uri, search);
 };
 
 globiData.urlForTaxonImageQuery = function (scientificName) {
@@ -10063,6 +10118,10 @@ globiData.urlForTaxonImagesQuery = function(scientificNames) {
 		}
 	}
 	return urlPrefix + '/imagesForNames' + nameQuery;
+};
+
+globiData.urlForStudyStats = function(search) {
+    return addQueryParams(urlPrefix + '/contributors?', search);
 };
 
 var createReq = function () {
@@ -10104,11 +10163,9 @@ globiData.findSources = function (callback) {
 
 globiData.findStudyStats = function (search, callback) {
     var req = createReq();
-    var uri = urlPrefix + '/contributors';
-    if (search.source) {
-        uri = uri + '?source=' + encodeURIComponent(search.source);
-    }
+    var uri = globiData.urlForStudyStats(search);
     req.open('GET', uri, true);
+
     req.onreadystatechange = function () {
         if (req.readyState === 4 && req.status === 200) {
             var resp = JSON.parse(req.responseText);
