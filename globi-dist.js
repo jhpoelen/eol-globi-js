@@ -899,14 +899,13 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
                 var commonName = data['commonName'] ? data['commonName'] : '',
                     scientificName = data['scientificName'] ? data['scientificName'] : '',
                     thumbnailURL = data['thumbnailURL'] ? data['thumbnailURL'] : '',
-                    infoUrl = data['thumbnailUrl'] ? data['thumbnailUrl'] : '',
-                    imageURL = data['imageURL'] ? data['imageURL'] : '';
+                    infoURL = data['infoURL'] ? data['infoURL'] : '';
 
                 return [
                     '<div class="scientific-name">' + scientificName + '</div>',
-                    '<div class="taxon-image"><a target="_blank" href="' + imageURL + '"><img height="50px" src="' + thumbnailURL + '" /></a></div>',
+                    '<div class="taxon-image"><a target="_blank" href="' + infoURL + '"><img height="50px" src="' + thumbnailURL + '" /></a></div>',
                     '<div class="common-name">' + commonName + '</div>',
-                    '<div class="more-info"><a href="' + infoUrl + '">more info</a></div>'
+                    '<div class="more-info"><a target="_blank" href="' + infoURL + '">more info</a></div>'
                 ];
             }
         },
