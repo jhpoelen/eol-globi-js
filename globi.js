@@ -324,7 +324,6 @@ globi.addInteractionGraph = function (options) {
 
 
     var callback = function (interactions) {
-        console.log('found [' + interactions.length + '] interactions');
         var mergedInteractions = {};
         var nodes = {};
 
@@ -799,6 +798,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         this.selectedTargetTaxon = null;
         this.selectedInteractionType = null;
         this.dataFetcher = null;
+        this.currentTimeout = null;
         this.init();
     }
 
@@ -858,6 +858,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         },
 
         updateQueryParameter: function(value, queryParameterType) {
+            var me = this;
             switch (queryParameterType) {
                 case 'sourceTaxon':
                     this.selectedSourceTaxon = value;
@@ -878,15 +879,19 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
                 },
                 me = this,
                 url;
+            var selectorCount = 0;
 
             if (this.selectedSourceTaxon !== null) {
                 searchHash['sourceTaxa'] = [this.selectedSourceTaxon];
+                selectorCount++;
             }
             if (this.selectedTargetTaxon !== null) {
                 searchHash['targetTaxa'] = [this.selectedTargetTaxon];
+                selectorCount++;
             }
             if (this.selectedInteractionType !== null) {
                 searchHash['interactionType'] = this.selectedInteractionType;
+                selectorCount++;
             }
 
             url = globiData.urlForTaxonInteractionQuery(searchHash);
@@ -898,10 +903,20 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
             } else {
                 this.dataFetcher.settings.url = url;
             }
+            clearTimeout(this.timeout);
+            me.clearResultView();
+            if (selectorCount > 1) {
+                this.timeout = setTimeout(function() {
+                    me.disableSelectors();
+                    me.dataFetcher.fetch(function(data) {
+                        me.enableSelectors();
+                        me.showData(globi.ResponseMapper(data)());
+                    });
+                }, 500);
 
-            this.dataFetcher.fetch(function(data) {
-                me.showData(globi.ResponseMapper(data)());
-            });
+            } else {
+                me.enableSelectors();
+            }
         },
 
         retrieveDataForTypeSelection: function() {
@@ -935,9 +950,10 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
                 var table = $('<table class="interactions-result"/>');
                 data.forEach(function (item) {
                     table.append(
-                        '<tr class="' + (odd ? 'odd' : 'even') + '"><td>' + item.source_taxon_name + '</td>' +
-                        '<td>' + item.interaction_type + '</td>' +
-                        '<td>' + item.target_taxon_name + '</td>' +
+                        '<tr class="' + (odd ? 'odd' : 'even') + '">' +
+                            '<td>' + item.source_taxon_name + '</td>' +
+                            '<td>' + item.interaction_type + '</td>' +
+                            '<td>' + item.target_taxon_name + '</td>' +
                         '</tr>');
                     odd = !odd;
                 });
@@ -945,6 +961,18 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
             } else {
                 this.resultView.html('Empty resultset');
             }
+        },
+
+        disableSelectors: function() {
+            this.sourceTaxonSelector.disable();
+            this.targetTaxonSelector.disable();
+            this.typeSelector.$element.prop('disabled', true);
+        },
+
+        enableSelectors: function() {
+            this.sourceTaxonSelector.enable();
+            this.targetTaxonSelector.enable();
+            this.typeSelector.$element.prop('disabled', false);
         },
 
         _camelCaseToRealWords: function(str) {
@@ -1076,6 +1104,14 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
                     }
                 }
             });
+        },
+
+        disable: function() {
+            $('#' + this.settings.idPrefix + 'input').tokenInput('toggleDisabled', true);
+        },
+
+        enable: function() {
+            $('#' + this.settings.idPrefix + 'input').tokenInput('toggleDisabled', false);
         }
     });
 
