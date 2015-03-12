@@ -880,10 +880,11 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         },
 
         retrieveData: function() {
-            var searchHash = {
-                    'resultType': 'json'
+            var me = this,
+                searchHash = {
+                    'resultType': 'json',
+                    'bbox': me.settings.bboxString
                 },
-                me = this,
                 url;
             var selectorCount = 0;
 
@@ -1016,7 +1017,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
 
         process: function() {
             var me = this,
-                url = 'http://api.globalbioticinteractions.org/taxon?type=json&' + me.settings.bboxString + '&field=taxon_common_names&field=taxon_path&field=taxon_path_ids';
+                url = 'http://api.globalbioticinteractions.org/taxon?type=json&bbox=' + me.settings.bboxString + '&field=taxon_common_names&field=taxon_path&field=taxon_path_ids';
 
             if (!this.dataFetcher) {
                 this.dataFetcher = new globi.PaginatedDataFetcher({
