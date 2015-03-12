@@ -724,6 +724,7 @@ globi.PaginatedDataFetcher = function(settings) {
         limit: 1024,
         url: ''
     }, settings);
+    this._initialOffset = this.settings.offset;
     this.init();
 };
 
@@ -762,8 +763,13 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         });
     },
 
-    fetch: function(callback) {
+    fetch: function(callback, reset) {
         var me = this;
+        reset = reset ? !!reset : true;
+        if (reset) {
+            me.settings.offset = me._initialOffset;
+        }
+        me.init();
         me.poll().then(function () {
             return true;
         }).done(function () {
