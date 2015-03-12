@@ -811,18 +811,104 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
 
     $.extend(Plugin.prototype, {
         init: function() {
+            var me = this;
             this.$element.empty();
             this.$element.css({
                 padding: '20px'
             });
+            this.infoBox = {
+                visible: false,
+                $element: null
+            };
             this.createSourceTaxonSelector();
             this.createInteractionTypesSelector();
             this.createTargetTaxonSelector();
             this.createResultView();
-            this.$element.append(this.sourceTaxonSelector.$element);
-            this.$element.append(this.typeSelector.$element);
-            this.$element.append(this.targetTaxonSelector.$element);
+            var selectorTable = $('<table id="selector-head"><tr><td id="source-selector-cell"></td><td id="type-selector-cell"></td><td id="target-selector-cell"></td></tr>');
+            this.$element.append(selectorTable);
+            $('#source-selector-cell').append(this.sourceTaxonSelector.$element);
+            $('#type-selector-cell').append(this.typeSelector.$element);
+            $('#target-selector-cell').append(this.targetTaxonSelector.$element);
+            //this.$element.append(this.sourceTaxonSelector.$element);
+            //this.$element.append(this.typeSelector.$element);
+            //this.$element.append(this.targetTaxonSelector.$element);
             this.$element.append(this.resultView);
+
+            $(document).on('click', '.interaction-result', function() {
+                var e = $(this);
+                me.showInfoBox(e);
+            });
+
+        },
+
+        showInfoBox: function(target) {
+            var me = this;
+            var data = target.data();
+
+            var sourceId = data['sourceTaxon'],
+                targetId = data['targetTaxon'],
+                sourceName = data['sourceTaxonName'],
+                targetName = data['targetTaxonName'],
+                interactionType = data['interactionType'];
+
+            var rowId = target.attr('id');
+
+            $('tr.with-result').removeClass('with-result');
+            $('tr.result-row').remove();
+            $('.interactions-result tr').css({'color': 'black'});
+
+            var infoRow = [
+                '<tr class="result-row result-row-for-' + rowId + '">',
+                    '<td class="result-source"><div class="source-label"></div><div class="source-data"></div></td>',
+                    '<td class="result-type"><div class="interactiontype-label"></div><div class="interactiontype-data"></div></td>',
+                    '<td class="result-target"><div class="target-label"></div><div class="target-data"></div></td>',
+                '</tr>'
+            ].join('');
+
+            target.addClass('with-result');
+            $(infoRow).insertBefore(target);
+
+            globiData.findTaxonInfo(sourceName, function(data) {
+                var template = fillTemplate(data);
+                var resultRowClassName = 'result-row-for-' + rowId;
+                $('.' + resultRowClassName + ' .source-data').html(template);
+            });
+
+            globiData.findTaxonInfo(targetName, function(data) {
+                var template = fillTemplate(data);
+                var resultRowClassName = 'result-row-for-' + rowId;
+                $('.' + resultRowClassName + ' .target-data').html(template);
+            });
+
+            // Get Interaction Type Informations
+            globiData.findInteractionTypes(function(data) {
+                var sourceLabel = data[interactionType] && data[interactionType]['source'] ? data[interactionType]['source'] : 'source',
+                    targetLabel = data[interactionType] && data[interactionType]['target'] ? data[interactionType]['target'] : 'target',
+                    interactionTypeLabel = me._camelCaseToRealWords(interactionType),
+                    infoUrl = data[interactionType] && data[interactionType]['termIRI'] ? data[interactionType]['termIRI'] : '';
+
+                var resultRowClassName = 'result-row-for-' + rowId;
+
+                $('.' + resultRowClassName + ' .source-label').html(sourceLabel);
+                $('.' + resultRowClassName + ' .target-label').html(targetLabel);
+                $('.' + resultRowClassName + ' .interactiontype-label').html('<a target="_blank" href="' + infoUrl + '">' + interactionTypeLabel + '</a>');
+            });
+
+
+            function fillTemplate(data) {
+                var commonName = data['commonName'] ? data['commonName'] : '',
+                    scientificName = data['scientificName'] ? data['scientificName'] : '',
+                    thumbnailURL = data['thumbnailURL'] ? data['thumbnailURL'] : '',
+                    infoUrl = data['thumbnailUrl'] ? data['thumbnailUrl'] : '',
+                    imageURL = data['imageURL'] ? data['imageURL'] : '';
+
+                return [
+                    '<div class="scientific-name">' + scientificName + '</div>',
+                    '<div class="taxon-image"><a target="_blank" href="' + imageURL + '"><img height="50px" src="' + thumbnailURL + '" /></a></div>',
+                    '<div class="common-name">' + commonName + '</div>',
+                    '<div class="more-info"><a href="' + infoUrl + '">more info</a></div>'
+                ];
+            }
         },
 
         update: function(bboxString) {
@@ -952,16 +1038,23 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         },
 
         showData: function(data) {
+            var me = this;
             this.clearResultView();
             var odd = true;
             if (data.length > 0) {
                 var table = $('<table class="interactions-result"/>');
                 data.forEach(function (item) {
+                    var rowId = (item.source_taxon_external_id + '---' + item.interaction_type + '---' + item.target_taxon_external_id).replace(/:/g, '_');
                     table.append(
-                        '<tr class="' + (odd ? 'odd' : 'even') + '">' +
-                            '<td>' + item.source_taxon_name + '</td>' +
-                            '<td>' + item.interaction_type + '</td>' +
-                            '<td>' + item.target_taxon_name + '</td>' +
+                        '<tr id="' + rowId + '" class="interaction-result ' + (odd ? 'odd' : 'even') + '" ' +
+                            'data-source-taxon="' + item.source_taxon_external_id + '" ' +
+                            'data-source-taxon-name="' + item.source_taxon_name + '" ' +
+                            'data-target-taxon="' + item.target_taxon_external_id + '" ' +
+                            'data-target-taxon-name="' + item.target_taxon_name + '" ' +
+                            'data-interaction-type="' + item.interaction_type + '">' +
+                            '<td class="source-cell">' + item.source_taxon_name + '</td>' +
+                            '<td class="type-cell">' + me._camelCaseToRealWords(item.interaction_type) + '</td>' +
+                            '<td class="target-cell">' + item.target_taxon_name + '</td>' +
                         '</tr>');
                     odd = !odd;
                 });
