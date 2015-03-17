@@ -1002,7 +1002,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
                     me.disableSelectors();
                     me.dataFetcher.fetch(function(data) {
                         me.enableSelectors();
-                        me.showData(globi.ResponseMapper(data)());
+                        me.showData(globi.ResponseMapper(data)(), searchHash);
                     });
                 }, 500);
 
@@ -1035,9 +1035,10 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
             this.resultView.empty();
         },
 
-        showData: function(data) {
+        showData: function(data, searchHash) {
             var me = this, stats = { sourceTaxa: [], targetTaxa: [], interactionCount: 0 };
-            this.clearResultView();
+            searchHash.resultType = 'csv';
+            var downloadUrl = globiData.urlForTaxonInteractionQuery(searchHash);
             var odd = true;
             if (data.length > 0) {
                 var table = $('<table class="interactions-result"/>');
@@ -1067,8 +1068,14 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
                 });
                 tableHead.append(
                     '<tr>' +
+                    '<th></th>' +
+                    '<th class="download"><a href="' + downloadUrl + '">Download data</a></th>' +
+                    '<th></th>' +
+                    '</tr>' +
+                    '<tr>' +
                     '<th>' + stats.sourceTaxa.length + ' source(s)' + '</th>' +
                     '<th>' + stats.interactionCount + ' interaction(s)' + '</th>' +
+                    //'<th><a href="' + downloadUrl + '">Download ' + stats.interactionCount + ' interaction(s)' + '</a></th>' +
                     '<th>' + stats.targetTaxa.length + ' target(s)' + '</th>' +
                     '</tr>');
                 table.append(tableHead);
