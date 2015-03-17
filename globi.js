@@ -1036,14 +1036,23 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         },
 
         showData: function(data) {
-            var me = this;
+            var me = this, stats = { sourceTaxa: [], targetTaxa: [], interactionCount: 0 };
             this.clearResultView();
             var odd = true;
             if (data.length > 0) {
                 var table = $('<table class="interactions-result"/>');
+                var tableHead = $('<thead/>');
+                var tableBody = $('<tbody/>');
                 data.forEach(function (item) {
                     var rowId = (item.source_taxon_external_id + '---' + item.interaction_type + '---' + item.target_taxon_external_id).replace(/:/g, '_');
-                    table.append(
+                    if (stats.sourceTaxa.indexOf(item.source_taxon_external_id) === -1) {
+                        stats.sourceTaxa.push(item.source_taxon_external_id);
+                    }
+                    if (stats.targetTaxa.indexOf(item.target_taxon_external_id) === -1) {
+                        stats.targetTaxa.push(item.target_taxon_external_id);
+                    }
+                    stats.interactionCount++;
+                    tableBody.append(
                         '<tr id="' + rowId + '" class="interaction-result ' + (odd ? 'odd' : 'even') + '" ' +
                             'data-source-taxon="' + item.source_taxon_external_id + '" ' +
                             'data-source-taxon-name="' + item.source_taxon_name + '" ' +
@@ -1056,6 +1065,14 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
                         '</tr>');
                     odd = !odd;
                 });
+                tableHead.append(
+                    '<tr>' +
+                    '<th>' + stats.sourceTaxa.length + ' source(s)' + '</th>' +
+                    '<th>' + stats.interactionCount + ' interaction(s)' + '</th>' +
+                    '<th>' + stats.targetTaxa.length + ' target(s)' + '</th>' +
+                    '</tr>');
+                table.append(tableHead);
+                table.append(tableBody);
                 this.resultView.append(table);
             } else {
                 this.resultView.html('Empty resultset');
