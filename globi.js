@@ -1124,7 +1124,6 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
 
     $.extend(TaxonSelector.prototype, {
         init: function() {
-            var me = this;
             this.$element = $('<div id="' + this.settings.idPrefix + 'selector-wrapper"/>');
             this._data = [];
 
@@ -1132,24 +1131,10 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         },
 
         process: function() {
-            var me = this,
-                url = 'http://api.globalbioticinteractions.org/taxon?type=json&bbox=' + me.settings.bboxString + '&field=taxon_common_names&field=taxon_path&field=taxon_path_ids';
-
-            if (!this.dataFetcher) {
-                this.dataFetcher = new globi.PaginatedDataFetcher({
-                    url: url
-                });
-            } else {
-                this.dataFetcher.settings.url = url;
-            }
-
             this.$element.empty();
             this.initUi();
-            this.dataFetcher.fetch(function(data) {
-                me.parseData(data);
-                me.processUi();
-                me.render();
-            });
+            this.processUi();
+            this.render();
         },
 
         update: function(bboxString) {
@@ -1172,34 +1157,43 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
 
         render: function() {
             var me = this,
+                url = 'http://api.globalbioticinteractions.org/findCloseMatches',
                 settings = me.settings,
                 inputSelector = '#' + settings.idPrefix + 'input';
-            $( inputSelector).tokenInput(me._data,{
-                placeholder: settings.placeholder,
-                hintText: settings.hintText,
-                propertyToSearch: "label",
-                preventDuplicates: true,
-                tokenValue: 'value',
-                tokenLimit: 1,
-                onAdd: function(item) {
-                    //var tokens = $(inputSelector).tokenInput("get");
-                    setTimeout(settings.selected.callback.call(settings.selected.context, item.name, settings.type), 0);
-                },
-                onDelete: function(item) {
-                    //var tokens = $(inputSelector).tokenInput("get");
-                    setTimeout(settings.selected.callback.call(settings.selected.context, null, settings.type), 0);
-                }
-                //,
-                //resultsFormatter: function(item){ return "<li>" + "<img src='" + item.url + "' title='" + item.first_name + " " + item.last_name + "' height='25px' width='25px' />" + "<div style='display: inline-block; padding-left: 10px;'><div class='full_name'>" + item.first_name + " " + item.last_name + "</div><div class='email'>" + item.email + "</div></div></li>" },
-                //tokenFormatter: function(item) { return "<li><p>" + item.first_name + " <b style='color: red'>" + item.last_name + "</b></p></li>" }
+            $(document).ready(function() {
+                $(inputSelector).tokenInput(url,{
+                    queryParam: 'taxonName',
+                    crossDomain: false
+                    ,
+                    onResult: function(results) {
+                        return me.parseData(results);
+                        //return me._data;
+                    },
+                    placeholder: settings.placeholder,
+                    hintText: settings.hintText,
+                    propertyToSearch: "label",
+                    preventDuplicates: true,
+                    tokenValue: 'value',
+                    tokenLimit: 1,
+                    onAdd: function(item) {
+                        setTimeout(settings.selected.callback.call(settings.selected.context, item.name, settings.type), 0);
+                    },
+                    onDelete: function(item) {
+                        setTimeout(settings.selected.callback.call(settings.selected.context, null, settings.type), 0);
+                    }
+                    //,
+                    //resultsFormatter: function(item){ console.log(item); return "<li>" + "<img src='" + item.url + "' title='" + item.first_name + " " + item.last_name + "' height='25px' width='25px' />" + "<div style='display: inline-block; padding-left: 10px;'><div class='full_name'>" + item.first_name + " " + item.last_name + "</div><div class='email'>" + item.email + "</div></div></li>" },
+                    //tokenFormatter: function(item) { return "<li><p>" + item.first_name + " <b style='color: red'>" + item.last_name + "</b></p></li>" }
+                });
             });
         },
 
         parseData: function(data) {
             var me = this;
-            var idCache = [];
-            data = globi.ResponseMapper(data);
-            data().forEach(function(item) {
+            var idCache = [],
+                returnData = [];
+            data = globi.ResponseMapper(data)();
+            data.forEach(function(item) {
                 var commonNames = globiData.mapCommonNameList(item['taxon_common_names']),
                     commonName = (commonNames['count'] > 0 && commonNames['en']) ? commonNames['en'] : '';
                 if (item['taxon_path'] && item['taxon_path_ids']) {
@@ -1217,7 +1211,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
                     });
                     for (var i = 0, len = pathList.length; i < len; i++) {
                         if (idCache.indexOf(idList[i]) === -1 ) {
-                            me._data.push({
+                            returnData.push({
                                 'name': pathList[i],
                                 'label': pathList[i] + ((i === len - 1) && (commonName !== '') ? ' (' + commonName + ')' : ''),
                                 'value': idList[i]
@@ -1227,6 +1221,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
                     }
                 }
             });
+            return returnData;
         },
 
         disable: function() {
