@@ -1125,16 +1125,18 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
     $.extend(TaxonSelector.prototype, {
         init: function() {
             this.$element = $('<div id="' + this.settings.idPrefix + 'selector-wrapper"/>');
+            this.input = null;
             this._data = [];
 
             this.process();
         },
 
         process: function() {
+            var me = this;
             this.$element.empty();
             this.initUi();
             this.processUi();
-            this.render();
+            window.setTimeout(function() { me.render(); }, 0);
         },
 
         update: function(bboxString) {
@@ -1148,7 +1150,9 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
 
         processUi: function() {
             this.$element.empty();
-            this.$element.append('<div style="margin-bottom: 10px;"><input size="50"  placeholder="Type in a taxon name" id="' + this.settings.idPrefix + 'input" /></div>');
+            this.input = $('<input size="50" style="width: 210px;" placeholder="Type in a taxon name" id="' + this.settings.idPrefix + 'input" />');
+            var inputWrapper  = $('<div style="margin-bottom: 10px;"/>').append(this.input);
+            this.$element.append(inputWrapper);
             var wrapper = this.$element.append('<div style="float: left;"/>');
             wrapper.append('<div style="font-size: 12px;" id="' + this.settings.idPrefix + 'id" />');
             wrapper.append('<div style="font-size: 12px;" id="' + this.settings.idPrefix + 'name" />');
@@ -1158,33 +1162,29 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         render: function() {
             var me = this,
                 url = 'http://api.globalbioticinteractions.org/findCloseMatches',
-                settings = me.settings,
-                inputSelector = '#' + settings.idPrefix + 'input';
-            $(document).ready(function() {
-                $(inputSelector).tokenInput(url,{
-                    queryParam: 'taxonName',
-                    crossDomain: false
-                    ,
-                    onResult: function(results) {
-                        return me.parseData(results);
-                        //return me._data;
-                    },
-                    placeholder: settings.placeholder,
-                    hintText: settings.hintText,
-                    propertyToSearch: "label",
-                    preventDuplicates: true,
-                    tokenValue: 'value',
-                    tokenLimit: 1,
-                    onAdd: function(item) {
-                        setTimeout(settings.selected.callback.call(settings.selected.context, item.name, settings.type), 0);
-                    },
-                    onDelete: function(item) {
-                        setTimeout(settings.selected.callback.call(settings.selected.context, null, settings.type), 0);
-                    }
-                    //,
-                    //resultsFormatter: function(item){ console.log(item); return "<li>" + "<img src='" + item.url + "' title='" + item.first_name + " " + item.last_name + "' height='25px' width='25px' />" + "<div style='display: inline-block; padding-left: 10px;'><div class='full_name'>" + item.first_name + " " + item.last_name + "</div><div class='email'>" + item.email + "</div></div></li>" },
-                    //tokenFormatter: function(item) { return "<li><p>" + item.first_name + " <b style='color: red'>" + item.last_name + "</b></p></li>" }
-                });
+                settings = me.settings;
+
+            this.input.tokenInput(url,{
+                queryParam: 'taxonName',
+                crossDomain: false,
+                onResult: function(results) {
+                    return me.parseData(results);
+                },
+                placeholder: settings.placeholder,
+                hintText: settings.hintText,
+                propertyToSearch: "label",
+                preventDuplicates: true,
+                tokenValue: 'value',
+                tokenLimit: 1,
+                onAdd: function(item) {
+                    setTimeout(settings.selected.callback.call(settings.selected.context, item.name, settings.type), 0);
+                },
+                onDelete: function(item) {
+                    setTimeout(settings.selected.callback.call(settings.selected.context, null, settings.type), 0);
+                }
+                //,
+                //resultsFormatter: function(item){ console.log(item); return "<li>" + "<img src='" + item.url + "' title='" + item.first_name + " " + item.last_name + "' height='25px' width='25px' />" + "<div style='display: inline-block; padding-left: 10px;'><div class='full_name'>" + item.first_name + " " + item.last_name + "</div><div class='email'>" + item.email + "</div></div></li>" },
+                //tokenFormatter: function(item) { return "<li><p>" + item.first_name + " <b style='color: red'>" + item.last_name + "</b></p></li>" }
             });
         },
 
