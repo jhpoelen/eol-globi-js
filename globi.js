@@ -1041,7 +1041,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
             searchHash.includeObservations = true;
             searchHash.fields = ['source_taxon_id', 'source_taxon_name', 'source_taxon_path', 'source_taxon_path_ids'
                 , 'interaction_type', 'target_taxon_id', 'target_taxon_name', 'target_taxon_path', 'target_taxon_path_ids'
-                , 'latitude', 'longitude', 'source_citation', 'study_url', 'study_source_citation'];
+                , 'latitude', 'longitude', 'study_citation', 'study_url', 'study_source_citation'];
             var downloadUrl = globiData.urlForTaxonInteractionQuery(searchHash);
             var odd = true;
             if (data.length > 0) {
