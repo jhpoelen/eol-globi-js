@@ -7,7 +7,7 @@
         "example": "examples"
     },
     "dependencies": {
-        "globi-data": "~0.0.40",
+        "globi-data": "~0.0.41",
 		    "d3": "~3.2.5",
         "jquery": ">=2.1"
     },
