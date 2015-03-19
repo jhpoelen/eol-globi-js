@@ -38,8 +38,8 @@
 
 	function loadView(taxonScientificName) {
 		d3.selectAll(".globi").selectAll("span").remove();
-		globi.viewInteractions("globi-prey", "preysOn", taxonScientificName, " eats ", onClickScientificName);
-		globi.viewInteractions("globi-predator", "preyedUponBy", taxonScientificName, " eaten by ", onClickScientificName);
+		globi.viewInteractions("globi-prey", "eats", taxonScientificName, " eats ", onClickScientificName);
+		globi.viewInteractions("globi-predator", "eatenBy", taxonScientificName, " eaten by ", onClickScientificName);
 	}
 
 	function reloadView() {
