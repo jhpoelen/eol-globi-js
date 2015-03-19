@@ -1045,7 +1045,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
                 'source_specimen_life_stage','source_specimen_physiological_state','source_specimen_body_part'
                 , 'interaction_type'
                 , 'target_taxon_id', 'target_taxon_name', 'target_taxon_path', 'target_taxon_path_ids'
-                , ' target_specimen_life_stage','target_specimen_physiological_state','target_specimen_body_part'
+                , 'target_specimen_life_stage','target_specimen_physiological_state','target_specimen_body_part'
                 , 'latitude', 'longitude'
                 , 'study_citation', 'study_url', 'study_source_citation'];
             var downloadUrl = globiData.urlForTaxonInteractionQuery(searchHash);
