@@ -1040,6 +1040,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         showData: function(data, searchHash) {
             var me = this, stats = { sourceTaxa: [], targetTaxa: [], interactionCount: 0 };
             searchHash.resultType = 'csv';
+            searchHash.includeObservations = true;
             var downloadUrl = globiData.urlForTaxonInteractionQuery(searchHash);
             var odd = true;
             if (data.length > 0) {
