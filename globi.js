@@ -909,8 +909,8 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
             }
         },
 
-        update: function(bboxString) {
-            this.settings.bboxString = bboxString;
+        update: function(search) {
+            this.settings.search = search;
             this.init();
         },
 
@@ -923,7 +923,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
                 placeholder: 'Source Taxon ...',
                 hintText: 'Source: Type in a taxon name',
                 selected: { callback: me.updateQueryParameter, context: me },
-                bboxString: me.settings.bboxString
+                search: me.settings.search
             });
         },
 
@@ -936,7 +936,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
                 placeholder: 'Target Taxon ...',
                 hintText: 'Target: Type in a taxon name',
                 selected: { callback: me.updateQueryParameter, context: me },
-                bboxString: me.settings.bboxString
+                search: me.settings.search
             });
         },
 
@@ -965,24 +965,21 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         },
 
         retrieveData: function() {
-            var me = this,
-                searchHash = {
-                    'resultType': 'json',
-                    'bbox': me.settings.bboxString
-                },
-                url;
+            var me = this;
+            var searchHash = $.extend({ resultType: 'json'}, me.settings.search);
+            var url;
             var selectorCount = 0;
 
             if (this.selectedSourceTaxon !== null) {
-                searchHash['sourceTaxa'] = [this.selectedSourceTaxon];
+                searchHash.sourceTaxa = [this.selectedSourceTaxon];
                 selectorCount++;
             }
             if (this.selectedTargetTaxon !== null) {
-                searchHash['targetTaxa'] = [this.selectedTargetTaxon];
+                searchHash.targetTaxa = [this.selectedTargetTaxon];
                 selectorCount++;
             }
             if (this.selectedInteractionType !== null) {
-                searchHash['interactionType'] = this.selectedInteractionType;
+                searchHash.interactionType = this.selectedInteractionType;
                 selectorCount++;
             }
 
@@ -1147,8 +1144,8 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
             window.setTimeout(function() { me.render(); }, 0);
         },
 
-        update: function(bboxString) {
-            this.settings.bboxString = bboxString;
+        update: function(search) {
+            this.settings.search = search;
             this.process();
         },
 

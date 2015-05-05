@@ -911,8 +911,8 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
             }
         },
 
-        update: function(bboxString) {
-            this.settings.bboxString = bboxString;
+        update: function(search) {
+            this.settings.search = search;
             this.init();
         },
 
@@ -925,7 +925,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
                 placeholder: 'Source Taxon ...',
                 hintText: 'Source: Type in a taxon name',
                 selected: { callback: me.updateQueryParameter, context: me },
-                bboxString: me.settings.bboxString
+                search: me.settings.search
             });
         },
 
@@ -938,7 +938,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
                 placeholder: 'Target Taxon ...',
                 hintText: 'Target: Type in a taxon name',
                 selected: { callback: me.updateQueryParameter, context: me },
-                bboxString: me.settings.bboxString
+                search: me.settings.search
             });
         },
 
@@ -967,24 +967,21 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         },
 
         retrieveData: function() {
-            var me = this,
-                searchHash = {
-                    'resultType': 'json',
-                    'bbox': me.settings.bboxString
-                },
-                url;
+            var me = this;
+            var searchHash = $.extend({ resultType: 'json'}, me.settings.search);
+            var url;
             var selectorCount = 0;
 
             if (this.selectedSourceTaxon !== null) {
-                searchHash['sourceTaxa'] = [this.selectedSourceTaxon];
+                searchHash.sourceTaxa = [this.selectedSourceTaxon];
                 selectorCount++;
             }
             if (this.selectedTargetTaxon !== null) {
-                searchHash['targetTaxa'] = [this.selectedTargetTaxon];
+                searchHash.targetTaxa = [this.selectedTargetTaxon];
                 selectorCount++;
             }
             if (this.selectedInteractionType !== null) {
-                searchHash['interactionType'] = this.selectedInteractionType;
+                searchHash.interactionType = this.selectedInteractionType;
                 selectorCount++;
             }
 
@@ -1149,8 +1146,8 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
             window.setTimeout(function() { me.render(); }, 0);
         },
 
-        update: function(bboxString) {
-            this.settings.bboxString = bboxString;
+        update: function(search) {
+            this.settings.search = search;
             this.process();
         },
 
@@ -10232,6 +10229,10 @@ var addQueryParams = function (uri, search) {
             uri = uri + '&exactNameMatchOnly=true';
         }
 
+        if (search.excludeChildTaxa) {
+            uri = uri + '&excludeChildTaxa=true';
+        }
+
         if (search.accordingTo) {
             uri = uri + '&accordingTo=' + encodeURIComponent(search.accordingTo);
         }
@@ -11147,7 +11148,7 @@ exports.XMLHttpRequest = function() {
 
 },{"__browserify_Buffer":45,"__browserify_process":46,"child_process":14,"fs":16,"http":27,"https":17,"url":22}],6:[function(require,module,exports){
 /*!
- * jQuery JavaScript Library v2.1.3
+ * jQuery JavaScript Library v2.1.4
  * http://jquery.com/
  *
  * Includes Sizzle.js
@@ -11157,7 +11158,7 @@ exports.XMLHttpRequest = function() {
  * Released under the MIT license
  * http://jquery.org/license
  *
- * Date: 2014-12-18T15:11Z
+ * Date: 2015-04-28T16:01Z
  */
 
 (function( global, factory ) {
@@ -11215,7 +11216,7 @@ var
 	// Use the correct document accordingly with window argument (sandbox)
 	document = window.document,
 
-	version = "2.1.3",
+	version = "2.1.4",
 
 	// Define a local copy of jQuery
 	jQuery = function( selector, context ) {
@@ -11679,7 +11680,12 @@ jQuery.each("Boolean Number String Function Array Date RegExp Object Error".spli
 });
 
 function isArraylike( obj ) {
-	var length = obj.length,
+
+	// Support: iOS 8.2 (not reproducible in simulator)
+	// `in` check used to prevent JIT error (gh-2145)
+	// hasOwn isn't used here due to false negatives
+	// regarding Nodelist length in IE
+	var length = "length" in obj && obj.length,
 		type = jQuery.type( obj );
 
 	if ( type === "function" || jQuery.isWindow( obj ) ) {
