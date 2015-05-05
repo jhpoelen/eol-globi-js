@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>EOL GloBI - Widget</title>
+    <link rel="stylesheet" href="https://rawgit.com/globalbioticinteractions/globalbioticinteractions.github.io/master/vendor/jquery.tokeninput/token-input.css">
+    <link rel="stylesheet" href="https://rawgit.com/globalbioticinteractions/globalbioticinteractions.github.io/master/css/widget.css">
+    <script src="../globi-dist.js"></script>
+
+    <script>
+        var $ = jQuery = globi.jQuery;
+    </script>
+    <script src="https://rawgit.com/globalbioticinteractions/globalbioticinteractions.github.io/master/vendor/jquery.tokeninput/jquery.tokeninput.js"></script>
+
+    <script>
+        (function($) {
+            $(function() {
+                $('#widget').interactions({bboxString: "-125.53344800000002,32.750323,-114.74487299999998,41.574361"});
+            });
+        })(jQuery);
+    </script>
+</head>
+<body>
+<div id="widget"></div>
+</body>
+</html>
