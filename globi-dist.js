@@ -969,6 +969,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
         retrieveData: function() {
             var me = this;
             var searchHash = $.extend({ resultType: 'json'}, me.settings);
+            console.log(JSON.stringify(searchHash));
             var url;
             var selectorCount = 0;
 
