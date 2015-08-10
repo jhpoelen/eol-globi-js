@@ -8,7 +8,7 @@
     },
     "dependencies": {
         "globi-data": "~0.0.43",
-		    "d3": "~3.2.5",
+        "d3": "~3.2.5",
         "jquery": ">=2.1"
     },
     "devDependencies": {
