@@ -741,7 +741,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
     fetchChunk: function(offset) {
         var me = this, settings = me.settings;
         var d = globi.Deferred();
-        $.ajax(settings.url + '&limit=' + settings.limit + '&offset=' + offset, {
+        jQuery.ajax(settings.url + '&limit=' + settings.limit + '&offset=' + offset, {
             dataType: 'json'
         }).done(function(response) {
             d.resolve(response);
