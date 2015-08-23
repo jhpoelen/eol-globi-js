@@ -19690,7 +19690,9 @@ globi.PaginatedDataFetcher = function(settings) {
     this.settings = globi.extend({
         offset: 0,
         limit: 1024,
-        url: ''
+        url: '',
+        maximumRequestCount: 2,
+        requestCount: 0
     }, settings);
     this._initialOffset = this.settings.offset;
     this.init();
@@ -19727,6 +19729,11 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
             }
 
             settings.offset = settings.offset + settings.limit;
+
+            settings.requestCount = settings.requestCount + 1;
+            if (settings.maximumRequestCount <= settings.requestCount) {
+                return me._data;
+            }
             return me.poll();
         });
     },
