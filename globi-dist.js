@@ -19709,7 +19709,7 @@ globi.extend(globi.PaginatedDataFetcher.prototype, {
     fetchChunk: function(offset) {
         var me = this, settings = me.settings;
         var d = globi.Deferred();
-        $.ajax(settings.url + '&limit=' + settings.limit + '&offset=' + offset, {
+        jQuery.ajax(settings.url + '&limit=' + settings.limit + '&offset=' + offset, {
             dataType: 'json'
         }).done(function(response) {
             d.resolve(response);
@@ -25152,10 +25152,7 @@ ClientRequest.prototype.end = function (data, encoding, cb) {
 		data = undefined
 	}
 
-	if (data)
-		stream.Writable.push.call(self, data, encoding)
-
-	stream.Writable.prototype.end.call(self, cb)
+	stream.Writable.prototype.end.call(self, data, encoding, cb)
 }
 
 ClientRequest.prototype.flushHeaders = function () {}
