@@ -53,3 +53,16 @@ test('render taxon info box', function (t) {
         });
     });
 });
+
+test('render taxon info box no common no image', function (t) {
+    t.plan(2);
+    var ee = globi.createTaxonInfo('Probolocoryphe uca');
+    ee.appendTaxonInfoTo(document.body);
+    t.ok(document.querySelector('.globi-taxon-info'));
+    ee.on('ready', function () {
+        t.ok(true);
+        ee.registerOnClick(function (scientificName) {
+            console.log('clicked on [' + scientificName + ']');
+        });
+    });
+});

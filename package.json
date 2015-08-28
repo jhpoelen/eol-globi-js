@@ -1,6 +1,6 @@
 {
     "name": "globi",
-    "version": "0.0.56",
+    "version": "0.0.57",
     "description": "embed EOL's Global Biotic Interactions Data http://github.com/jhpoelen/eol-globi-data/ in the browser",
     "main": "globi.js",
     "directories": {
