@@ -2,6 +2,7 @@ var d3 = require('d3');
 var globiData = require('globi-data');
 var EventEmitter = require('events').EventEmitter;
 var jQuery = require('jquery');
+var taxaprisma = require('taxaprisma');
 
 var globi = {};
 globi.d3 = d3;
@@ -33,21 +34,10 @@ globi.createTaxonInfo = function (scientificName) {
     var taxonInfoDiv = document.createElement('div');
     taxonInfoDiv.setAttribute('class', 'globi-taxon-info');
     var callback = function (taxonInfo) {
-        if (taxonInfo.thumbnailURL) {
-            var img = document.createElement('img');
-            img.setAttribute('src', taxonInfo.thumbnailURL);
-            taxonInfoDiv.appendChild(img);
-        }
-        var p = document.createElement('p');
-        var nameHtml = taxonInfo.scientificName;
-        if (taxonInfo.scientificName.split(' ').length > 1) {
-            nameHtml = '<i>' + nameHtml + '</i>';
-        }
-        if (taxonInfo.commonName) {
-            nameHtml = taxonInfo.commonName + ' (' + nameHtml + ')';
-        }
-        p.innerHTML = '<a href="' + taxonInfo.infoURL + '" target="_blank">' + nameHtml + '</a>';
-        taxonInfoDiv.appendChild(p);
+        var div = document.createElement('div');
+        div.className = 'result-source';
+        div.innerHTML = globi.getTaxonTemplate(taxonInfo);
+        taxonInfoDiv.appendChild(div);
         ee.emit('ready');
     };
     globiData.findTaxonInfo(scientificName, callback);
@@ -826,6 +816,29 @@ globi.ResponseMapper = function () {
         }
         return row;
     }
+};
+
+globi.getTaxonTemplate = function(taxon) {
+    var commonName = taxon['commonName'] ? taxon['commonName'] : '',
+        scientificName = taxon['scientificName'] ? taxon['scientificName'] : '',
+        path = taxon['taxonPath'] ? taxon['taxonPath'] : '',
+        thumbnailURL = taxon['thumbnailURL'] ? taxon['thumbnailURL'] : '../img/no-image-available.png',
+        infoURL = taxon['infoURL'] ? taxon['infoURL'] : '';
+
+    return template = [
+        '<a target="_blank" href="' + infoURL + '">',
+        '<div class="source-data">',
+        '<div class="scientific-name" style="color: ' + taxaprisma.colorFor(path) + ';">' + scientificName + '</div>',
+        '<div class="taxon-image">',
+        '<table style="width: 100%;"><tbody style="background-color: transparent;"><tr>',
+        '<td style="width: 50%;vertical-align: middle;"><img height="50px" src="' + thumbnailURL + '" /></td>',
+        '<td style="width: 50%;vertical-align: middle; text-align: right;"><img height="35px" src="' + taxaprisma.imageDataUrlFor(path) + '" /></td>',
+        '</tr></tbody></table>',
+        '</div>',
+        '<div class="common-name">' + commonName + '</div>',
+        '</div>',
+        '</a>'
+    ].join('');
 };
 
 module.exports = globi;
