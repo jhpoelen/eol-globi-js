@@ -8815,72 +8815,53 @@ module.exports = d3;
 (function () { delete this.d3; })(); // unset global
 
 },{"./d3":1}],3:[function(require,module,exports){
-var nodeXHR = require("xmlhttprequest");
+var nodeXHR = require('xmlhttprequest');
+var extend = require('extend');
+var querystring = require('querystring');
 var globiData = {};
 
 var urlPrefix = 'http://api.globalbioticinteractions.org';
 
 globiData.addQueryParams = function (uri, search) {
-        var locationQuery = function (location) {
-            var locationQuery = '';
-            for (var elem in location) {
-                if (location.hasOwnProperty(elem)) {
-                    locationQuery += '&' + elem + '=' + location[elem];
-                }
-            }
-            return locationQuery;
-        };
-
-        if (search.bbox) {
-            uri = uri + '&bbox=' + search.bbox;
-        }
-
+    function initParams(search) {
+        var alt = extend({}, search);
         if (search.location) {
-            uri = uri + locationQuery(search.location);
+            alt = extend(alt, search.location);
+            delete alt.location;
         }
+
+        function replaceAndDelete(match, replace) {
+            if (search[match]) {
+                if (!alt[replace]) {
+                    alt[replace] = search[match];
+                }
+                delete alt[match];
+            }
+        }
+
+        replaceAndDelete('sourceTaxa', 'sourceTaxon');
+        replaceAndDelete('targetTaxa', 'targetTaxon');
+        replaceAndDelete('fields', 'field');
 
         if (search.includeObservations) {
-            uri = uri + '&includeObservations=true';
+            alt.includeObservations = true;
         }
-
         if (search.exactNameMatchOnly) {
-            uri = uri + '&exactNameMatchOnly=true';
+            alt.exactNameMatchOnly = true;
         }
-
         if (search.excludeChildTaxa) {
-            uri = uri + '&excludeChildTaxa=true';
+            alt.excludeChildTaxa = true;
         }
-
-        if (search.accordingTo) {
-            uri = uri + '&accordingTo=' + encodeURIComponent(search.accordingTo);
-        }
-
-        if (search.interactionType) {
-            uri = uri + '&interactionType=' + encodeURIComponent(search.interactionType);
-        }
-
-        function addQueryParamsLocal(taxonNames, elemName) {
-            if (taxonNames) {
-                var taxonQuery = '';
-                for (var name in taxonNames) {
-                    if (taxonNames.hasOwnProperty(name)) {
-                        taxonQuery += '&' + elemName + '=' + encodeURIComponent(taxonNames[name]);
-                    }
-                }
-                uri = uri + taxonQuery;
-            }
-        }
-
-        addQueryParamsLocal(search.sourceTaxa, 'sourceTaxon');
-        addQueryParamsLocal(search.targetTaxa, 'targetTaxon');
-        addQueryParamsLocal(search.fields, 'field');
-
-        if (search.source) {
-            uri = uri + 'source=' + encodeURIComponent(search.source);
-        }
-        return uri;
+        return alt;
     }
-    ;
+    var qs = querystring.encode(initParams(search));
+    var altUri = uri;
+    if (qs.length > 0) {
+        altUri = uri + '&' + qs;
+    }
+    return altUri;
+}
+;
 
 globiData.urlForFindCloseTaxonMatches = function (name) {
     return urlPrefix + '/findCloseMatchesForTaxon/' + encodeURIComponent(name);
@@ -8888,23 +8869,28 @@ globiData.urlForFindCloseTaxonMatches = function (name) {
 
 globiData.urlForTaxonInteractionQuery = function (search) {
     var uri = urlPrefix;
+    var searchAlt = extend({}, search);
 
-    if (search.sourceTaxonScientificName) {
-        uri = uri + '/taxon/' + encodeURIComponent(search.sourceTaxonScientificName);
-        if (search.interactionType) {
-            uri = uri + '/' + encodeURIComponent(search.interactionType);
-            delete search.interactionType;
+    if (searchAlt.sourceTaxonScientificName) {
+        uri = uri + '/taxon/' + encodeURIComponent(searchAlt.sourceTaxonScientificName);
+        delete searchAlt.sourceTaxonScientificName;
+        if (searchAlt.interactionType) {
+            uri = uri + '/' + encodeURIComponent(searchAlt.interactionType);
+            delete searchAlt.interactionType;
         }
-        if (search.targetTaxonScientificName) {
-            uri = uri + '/' + encodeURIComponent(search.targetTaxonScientificName);
+        if (searchAlt.targetTaxonScientificName) {
+            uri = uri + '/' + encodeURIComponent(searchAlt.targetTaxonScientificName);
+            delete searchAlt.targetTaxonScientificName;
         }
     } else {
         uri = uri + '/interaction';
     }
     var ext = {'csv': '.csv', 'dot': '.dot'}
-    uri = uri + (ext[search.resultType] === undefined ? '' : ext[search.resultType]);
-    uri = uri + '?type=' + (search.resultType ? search.resultType : 'json.v2');
-    return this.addQueryParams(uri, search);
+    uri = uri + (ext[searchAlt.resultType] === undefined ? '' : ext[searchAlt.resultType]);
+    uri = uri + '?type=' + (searchAlt.resultType ? searchAlt.resultType : 'json.v2');
+    delete searchAlt.resultType;
+
+    return this.addQueryParams(uri, searchAlt);
 };
 
 globiData.urlForTaxonImageQuery = function (scientificName) {
@@ -9150,7 +9136,95 @@ globiData.findThumbnailById = function (search, callback) {
 
 module.exports = globiData;
 
-},{"xmlhttprequest":4}],4:[function(require,module,exports){
+},{"extend":4,"querystring":23,"xmlhttprequest":5}],4:[function(require,module,exports){
+'use strict';
+
+var hasOwn = Object.prototype.hasOwnProperty;
+var toStr = Object.prototype.toString;
+
+var isArray = function isArray(arr) {
+	if (typeof Array.isArray === 'function') {
+		return Array.isArray(arr);
+	}
+
+	return toStr.call(arr) === '[object Array]';
+};
+
+var isPlainObject = function isPlainObject(obj) {
+	if (!obj || toStr.call(obj) !== '[object Object]') {
+		return false;
+	}
+
+	var hasOwnConstructor = hasOwn.call(obj, 'constructor');
+	var hasIsPrototypeOf = obj.constructor && obj.constructor.prototype && hasOwn.call(obj.constructor.prototype, 'isPrototypeOf');
+	// Not own constructor property must be Object
+	if (obj.constructor && !hasOwnConstructor && !hasIsPrototypeOf) {
+		return false;
+	}
+
+	// Own properties are enumerated firstly, so to speed up,
+	// if last one is own, then all properties are own.
+	var key;
+	for (key in obj) {/**/}
+
+	return typeof key === 'undefined' || hasOwn.call(obj, key);
+};
+
+module.exports = function extend() {
+	var options, name, src, copy, copyIsArray, clone,
+		target = arguments[0],
+		i = 1,
+		length = arguments.length,
+		deep = false;
+
+	// Handle a deep copy situation
+	if (typeof target === 'boolean') {
+		deep = target;
+		target = arguments[1] || {};
+		// skip the boolean and the target
+		i = 2;
+	} else if ((typeof target !== 'object' && typeof target !== 'function') || target == null) {
+		target = {};
+	}
+
+	for (; i < length; ++i) {
+		options = arguments[i];
+		// Only deal with non-null/undefined values
+		if (options != null) {
+			// Extend the base object
+			for (name in options) {
+				src = target[name];
+				copy = options[name];
+
+				// Prevent never-ending loop
+				if (target !== copy) {
+					// Recurse if we're merging plain objects or arrays
+					if (deep && copy && (isPlainObject(copy) || (copyIsArray = isArray(copy)))) {
+						if (copyIsArray) {
+							copyIsArray = false;
+							clone = src && isArray(src) ? src : [];
+						} else {
+							clone = src && isPlainObject(src) ? src : {};
+						}
+
+						// Never move original objects, clone them
+						target[name] = extend(deep, clone, copy);
+
+					// Don't bring in undefined values
+					} else if (typeof copy !== 'undefined') {
+						target[name] = copy;
+					}
+				}
+			}
+		}
+	}
+
+	// Return the modified object
+	return target;
+};
+
+
+},{}],5:[function(require,module,exports){
 (function (process,Buffer){
 /**
  * Wrapper for built-in http.js to emulate the browser XMLHttpRequest object.
@@ -9753,7 +9827,7 @@ exports.XMLHttpRequest = function() {
 };
 
 }).call(this,require('_process'),require("buffer").Buffer)
-},{"_process":18,"buffer":10,"child_process":8,"fs":8,"http":37,"https":15,"url":47}],5:[function(require,module,exports){
+},{"_process":19,"buffer":11,"child_process":9,"fs":9,"http":38,"https":16,"url":48}],6:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.4
  * http://jquery.com/
@@ -18965,9 +19039,10 @@ return jQuery;
 
 }));
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 var cc0 = 'http://creativecommons.org/publicdomain/zero/1.0/';
 var ccBy = 'http://creativecommons.org/licenses/by/3.0/';
+var sa3 = 'http://creativecommons.org/licenses/by-sa/3.0/';
 
 
 var taxaprisma = {};
@@ -18991,6 +19066,8 @@ taxaprisma.taxonGroups = [
         'image/png': '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' } },
     { name: 'Amphibia', color: '#1E90FF', image: { id: '244be3ea-0fe5-45b6-b04e-1bd914489f95', ns: 'phylopic', licenseURL: cc0,
         'image/png': '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'  } },
+    { name: 'Elasmobranchii', color: '#1E90FF', image: { id: '993d4e41-51b3-4c59-a4ad-b3dbd482968e', ns: 'phylopic', licenseURL: sa3, attribution: 'Scarlet23 (vectorized by T. Michael Keesey)',
+        'image/png': 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAABm1BMVEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB2E+W/AAAAiHRSTlMADZa4D8rvAgO7OX+oESyA/WYBGTxgnLnR6Pr5d0YXU3qBR3WhyfHirXM2BUy8/PQxFUu15/K0byUpwYcjitvNfWGdTmn2Yx/tCqT+XVHO85jQmjD1+x0iiNjSn6IWCwjWNWSlT0geEsdskk0MXuPlPUBWXFRFGAY+5sgUKMUrM5XLeVBtscwqbKdIswAAAAFiS0dEAIgFHUgAAAFxSURBVFjDY2AYBaNgFIyCUTAKRsEoGAWjgDTAyMRMkX4W1g42dgr0c3B2dHRwUWAAN1B/Bw+5tvPy8QuADOgQJEmfkLCIKLeYuISkVAcMSMvICuNULyevoAhjCyspq6iqdWAF6hqaWtqYtuno6nXoGwBZhkaKxiYdBICpmbkFin5LK6CotQ0Dg61dB7HA3sHRyRmq38W1o0PPDcRy5+wgBXgYKxoxMnh6AZnePlDDfP38BUgyxDUgEEQFIfwTHEKSAR2hIEIgDClEwiMi9Qjr04uKFlWOiTWMizcD8hLQYiXePdEoSTE5CodBIOHolNQ0iOJ0yY6ODByJIxNTs79qVnZObp49Us7K7ejIx2FAASScUgqzi3JFHYtLSg3KhMAS5SzIqQiYCipwFAJgP3ATSvVplR1VOKTsgfqlqgnmm5rAjmDsMtZAA2qJyXl1LNgl6oEGNFBUlDV2dDRRZEBzR0cLZaVxa4cbZQbwtrUTrxgA+tn4w1DyipwAAAAldEVYdGRhdGU6Y3JlYXRlADIwMTMtMTEtMjNUMTc6NDI6NDItMDg6MDBYGP0UAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDEzLTExLTIzVDE3OjQyOjQyLTA4OjAwKUVFqAAAAABJRU5ErkJggg=='} },
     { name: 'Mammalia', color: '#1E90FF', image: { id: 'e5b0cde8-beab-48dc-b77c-d48b16c6a05e', ns: 'phylopic', licenseURL: cc0,
         'image/png': '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' } }
 ];
@@ -19064,7 +19141,7 @@ taxaprisma.imageLicenseFor = function (taxonPath) {
 };
 
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var d3 = require('d3');
 var globiData = require('globi-data');
 var EventEmitter = require('events').EventEmitter;
@@ -19910,11 +19987,11 @@ globi.getTaxonTemplate = function(taxon) {
 
 module.exports = globi;
 
-},{"d3":2,"events":14,"globi-data":3,"jquery":5,"taxaprisma":6}],8:[function(require,module,exports){
+},{"d3":2,"events":15,"globi-data":3,"jquery":6,"taxaprisma":7}],9:[function(require,module,exports){
 
-},{}],9:[function(require,module,exports){
-arguments[4][8][0].apply(exports,arguments)
-},{"dup":8}],10:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
+arguments[4][9][0].apply(exports,arguments)
+},{"dup":9}],11:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -21379,7 +21456,7 @@ function decodeUtf8Char (str) {
   }
 }
 
-},{"base64-js":11,"ieee754":12,"is-array":13}],11:[function(require,module,exports){
+},{"base64-js":12,"ieee754":13,"is-array":14}],12:[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -21505,7 +21582,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -21591,7 +21668,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 
 /**
  * isArray
@@ -21626,7 +21703,7 @@ module.exports = isArray || function (val) {
   return !! val && '[object Array]' == str.call(val);
 };
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -21929,7 +22006,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 var http = require('http');
 
 var https = module.exports;
@@ -21944,7 +22021,7 @@ https.request = function (params, cb) {
     return http.request.call(this, params, cb);
 }
 
-},{"http":37}],16:[function(require,module,exports){
+},{"http":38}],17:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -21969,12 +22046,12 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -22066,7 +22143,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 (function (global){
 /*! https://mths.be/punycode v1.3.2 by @mathias */
 ;(function(root) {
@@ -22600,7 +22677,7 @@ process.umask = function() { return 0; };
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -22686,7 +22763,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -22773,16 +22850,16 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":20,"./encode":21}],23:[function(require,module,exports){
+},{"./decode":21,"./encode":22}],24:[function(require,module,exports){
 module.exports = require("./lib/_stream_duplex.js")
 
-},{"./lib/_stream_duplex.js":24}],24:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":25}],25:[function(require,module,exports){
 // a duplex stream is just a stream that is both readable and writable.
 // Since JS doesn't have multiple prototypal inheritance, this class
 // prototypally inherits from Readable, and then parasitically from
@@ -22866,7 +22943,7 @@ function forEach (xs, f) {
   }
 }
 
-},{"./_stream_readable":26,"./_stream_writable":28,"core-util-is":29,"inherits":16,"process-nextick-args":30}],25:[function(require,module,exports){
+},{"./_stream_readable":27,"./_stream_writable":29,"core-util-is":30,"inherits":17,"process-nextick-args":31}],26:[function(require,module,exports){
 // a passthrough stream.
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
@@ -22895,7 +22972,7 @@ PassThrough.prototype._transform = function(chunk, encoding, cb) {
   cb(null, chunk);
 };
 
-},{"./_stream_transform":27,"core-util-is":29,"inherits":16}],26:[function(require,module,exports){
+},{"./_stream_transform":28,"core-util-is":30,"inherits":17}],27:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -23858,7 +23935,7 @@ function indexOf (xs, x) {
 }
 
 }).call(this,require('_process'))
-},{"./_stream_duplex":24,"_process":18,"buffer":10,"core-util-is":29,"events":14,"inherits":16,"isarray":17,"process-nextick-args":30,"string_decoder/":46,"util":9}],27:[function(require,module,exports){
+},{"./_stream_duplex":25,"_process":19,"buffer":11,"core-util-is":30,"events":15,"inherits":17,"isarray":18,"process-nextick-args":31,"string_decoder/":47,"util":10}],28:[function(require,module,exports){
 // a transform stream is a readable/writable stream where you do
 // something with the data.  Sometimes it's called a "filter",
 // but that's not a great name for it, since that implies a thing where
@@ -24057,7 +24134,7 @@ function done(stream, er) {
   return stream.push(null);
 }
 
-},{"./_stream_duplex":24,"core-util-is":29,"inherits":16}],28:[function(require,module,exports){
+},{"./_stream_duplex":25,"core-util-is":30,"inherits":17}],29:[function(require,module,exports){
 // A bit simpler than readable streams.
 // Implement an async ._write(chunk, cb), and it'll handle all
 // the drain event emission and buffering.
@@ -24579,7 +24656,7 @@ function endWritable(stream, state, cb) {
   state.ended = true;
 }
 
-},{"./_stream_duplex":24,"buffer":10,"core-util-is":29,"events":14,"inherits":16,"process-nextick-args":30,"util-deprecate":31}],29:[function(require,module,exports){
+},{"./_stream_duplex":25,"buffer":11,"core-util-is":30,"events":15,"inherits":17,"process-nextick-args":31,"util-deprecate":32}],30:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -24689,7 +24766,7 @@ function objectToString(o) {
   return Object.prototype.toString.call(o);
 }
 }).call(this,require("buffer").Buffer)
-},{"buffer":10}],30:[function(require,module,exports){
+},{"buffer":11}],31:[function(require,module,exports){
 (function (process){
 'use strict';
 module.exports = nextTick;
@@ -24706,7 +24783,7 @@ function nextTick(fn) {
 }
 
 }).call(this,require('_process'))
-},{"_process":18}],31:[function(require,module,exports){
+},{"_process":19}],32:[function(require,module,exports){
 (function (global){
 
 /**
@@ -24772,10 +24849,10 @@ function config (name) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],32:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 module.exports = require("./lib/_stream_passthrough.js")
 
-},{"./lib/_stream_passthrough.js":25}],33:[function(require,module,exports){
+},{"./lib/_stream_passthrough.js":26}],34:[function(require,module,exports){
 var Stream = (function (){
   try {
     return require('st' + 'ream'); // hack to fix a circular dependency issue when used with browserify
@@ -24789,13 +24866,13 @@ exports.Duplex = require('./lib/_stream_duplex.js');
 exports.Transform = require('./lib/_stream_transform.js');
 exports.PassThrough = require('./lib/_stream_passthrough.js');
 
-},{"./lib/_stream_duplex.js":24,"./lib/_stream_passthrough.js":25,"./lib/_stream_readable.js":26,"./lib/_stream_transform.js":27,"./lib/_stream_writable.js":28}],34:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":25,"./lib/_stream_passthrough.js":26,"./lib/_stream_readable.js":27,"./lib/_stream_transform.js":28,"./lib/_stream_writable.js":29}],35:[function(require,module,exports){
 module.exports = require("./lib/_stream_transform.js")
 
-},{"./lib/_stream_transform.js":27}],35:[function(require,module,exports){
+},{"./lib/_stream_transform.js":28}],36:[function(require,module,exports){
 module.exports = require("./lib/_stream_writable.js")
 
-},{"./lib/_stream_writable.js":28}],36:[function(require,module,exports){
+},{"./lib/_stream_writable.js":29}],37:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -24924,7 +25001,7 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":14,"inherits":16,"readable-stream/duplex.js":23,"readable-stream/passthrough.js":32,"readable-stream/readable.js":33,"readable-stream/transform.js":34,"readable-stream/writable.js":35}],37:[function(require,module,exports){
+},{"events":15,"inherits":17,"readable-stream/duplex.js":24,"readable-stream/passthrough.js":33,"readable-stream/readable.js":34,"readable-stream/transform.js":35,"readable-stream/writable.js":36}],38:[function(require,module,exports){
 var ClientRequest = require('./lib/request')
 var extend = require('xtend')
 var statusCodes = require('builtin-status-codes')
@@ -24999,7 +25076,7 @@ http.METHODS = [
 	'UNLOCK',
 	'UNSUBSCRIBE'
 ]
-},{"./lib/request":39,"builtin-status-codes":41,"url":47,"xtend":48}],38:[function(require,module,exports){
+},{"./lib/request":40,"builtin-status-codes":42,"url":48,"xtend":49}],39:[function(require,module,exports){
 exports.fetch = isFunction(window.fetch) && isFunction(window.ReadableByteStream)
 
 exports.blobConstructor = false
@@ -25034,7 +25111,7 @@ function isFunction (value) {
 
 xhr = null // Help gc
 
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 (function (process,Buffer){
 // var Base64 = require('Base64')
 var capability = require('./capability')
@@ -25282,7 +25359,10 @@ ClientRequest.prototype.end = function (data, encoding, cb) {
 		data = undefined
 	}
 
-	stream.Writable.prototype.end.call(self, data, encoding, cb)
+	if (data)
+		stream.Writable.push.call(self, data, encoding)
+
+	stream.Writable.prototype.end.call(self, cb)
 }
 
 ClientRequest.prototype.flushHeaders = function () {}
@@ -25316,7 +25396,7 @@ var unsafeHeaders = [
 ]
 
 }).call(this,require('_process'),require("buffer").Buffer)
-},{"./capability":38,"./response":40,"_process":18,"buffer":10,"foreach":42,"indexof":43,"inherits":16,"object-keys":44,"stream":36}],40:[function(require,module,exports){
+},{"./capability":39,"./response":41,"_process":19,"buffer":11,"foreach":43,"indexof":44,"inherits":17,"object-keys":45,"stream":37}],41:[function(require,module,exports){
 (function (process,Buffer){
 var capability = require('./capability')
 var foreach = require('foreach')
@@ -25493,7 +25573,7 @@ IncomingMessage.prototype._onXHRProgress = function () {
 }
 
 }).call(this,require('_process'),require("buffer").Buffer)
-},{"./capability":38,"_process":18,"buffer":10,"foreach":42,"inherits":16,"stream":36}],41:[function(require,module,exports){
+},{"./capability":39,"_process":19,"buffer":11,"foreach":43,"inherits":17,"stream":37}],42:[function(require,module,exports){
 module.exports = {
   "100": "Continue",
   "101": "Switching Protocols",
@@ -25554,7 +25634,7 @@ module.exports = {
   "511": "Network Authentication Required"
 }
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 
 var hasOwn = Object.prototype.hasOwnProperty;
 var toString = Object.prototype.toString;
@@ -25578,7 +25658,7 @@ module.exports = function forEach (obj, fn, ctx) {
 };
 
 
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 
 var indexOf = [].indexOf;
 
@@ -25589,7 +25669,7 @@ module.exports = function(arr, obj){
   }
   return -1;
 };
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 'use strict';
 
 // modified from https://github.com/es-shims/es5-shim
@@ -25676,7 +25756,7 @@ keysShim.shim = function shimObjectKeys() {
 
 module.exports = keysShim;
 
-},{"./isArguments":45}],45:[function(require,module,exports){
+},{"./isArguments":46}],46:[function(require,module,exports){
 'use strict';
 
 var toStr = Object.prototype.toString;
@@ -25695,7 +25775,7 @@ module.exports = function isArguments(value) {
 	return isArgs;
 };
 
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -25918,7 +25998,7 @@ function base64DetectIncompleteChar(buffer) {
   this.charLength = this.charReceived ? 3 : 0;
 }
 
-},{"buffer":10}],47:[function(require,module,exports){
+},{"buffer":11}],48:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -26627,7 +26707,7 @@ function isNullOrUndefined(arg) {
   return  arg == null;
 }
 
-},{"punycode":19,"querystring":22}],48:[function(require,module,exports){
+},{"punycode":20,"querystring":23}],49:[function(require,module,exports){
 module.exports = extend
 
 function extend() {
@@ -26646,5 +26726,5 @@ function extend() {
     return target
 }
 
-},{}]},{},[7])(7)
+},{}]},{},[8])(8)
 });
