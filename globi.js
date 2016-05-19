@@ -825,19 +825,19 @@ globi.getTaxonTemplate = function(taxon) {
         thumbnailURL = taxon['thumbnailURL'] ? taxon['thumbnailURL'] : '../img/no-image-available.png',
         infoURL = taxon['infoURL'] ? taxon['infoURL'] : '';
 
-    return template = [
-        '<a target="_blank" href="' + infoURL + '">',
+    return [
         '<div class="source-data">',
         '<div class="scientific-name" style="color: ' + taxaprisma.colorFor(path) + ';">' + scientificName + '</div>',
+        '<a target="_blank" href="' + infoURL + '">',
         '<div class="taxon-image">',
         '<table style="width: 100%;"><tbody style="background-color: transparent;"><tr>',
         '<td style="width: 50%;vertical-align: middle;"><img height="50px" src="' + thumbnailURL + '" /></td>',
         '<td style="width: 50%;vertical-align: middle; text-align: right;"><img height="35px" src="' + taxaprisma.imageDataUrlFor(path) + '" /></td>',
         '</tr></tbody></table>',
         '</div>',
+        '</a>',
         '<div class="common-name">' + commonName + '</div>',
-        '</div>',
-        '</a>'
+        '</div>'
     ].join('');
 };
 
