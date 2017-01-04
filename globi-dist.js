@@ -9086,6 +9086,7 @@ globiData.findSources = function (callback) {
     req.onreadystatechange = function () {
         if (req.readyState === 4 && req.status === 200) {
             var result = JSON.parse(req.responseText);
+            var citations = citation.extractCitations(result);
             callback(citation.extractCitations(result));
         }
     };
@@ -9093,10 +9094,10 @@ globiData.findSources = function (callback) {
 };
 
 globiData.findSourceNames = function (callback) {
-   globiData.findSources(new function(sourceCitations) {
+   globiData.findSources(function(sourceCitations) {
      callback(citation.parseSourceCitations(sourceCitations));
   });
-}
+};
 
 globiData.findStudyStats = function (search, callback) {
     var req = createReq();
@@ -20130,17 +20131,19 @@ taxaprisma.imageLicenseFor = function (taxonPath) {
  * @license MIT
  */
 
-var Url = require("url")
-  , spawn = require("child_process").spawn
-  , fs = require('fs');
+var Url = require("url");
+var spawn = require("child_process").spawn;
+var fs = require("fs");
 
 exports.XMLHttpRequest = function() {
+  "use strict";
+
   /**
    * Private variables
    */
   var self = this;
-  var http = require('http');
-  var https = require('https');
+  var http = require("http");
+  var https = require("https");
 
   // Holds http.js objects
   var request;
@@ -20159,7 +20162,8 @@ exports.XMLHttpRequest = function() {
     "Accept": "*/*",
   };
 
-  var headers = defaultHeaders;
+  var headers = {};
+  var headersCase = {};
 
   // These headers are not user setable.
   // The following are allowed but banned in the spec:
@@ -20227,6 +20231,10 @@ exports.XMLHttpRequest = function() {
   this.responseXML = "";
   this.status = null;
   this.statusText = null;
+  
+  // Whether cross-site Access-Control requests should be made using
+  // credentials such as cookies or authorization headers
+  this.withCredentials = false;
 
   /**
    * Private methods
@@ -20271,7 +20279,7 @@ exports.XMLHttpRequest = function() {
 
     // Check for valid request method
     if (!isAllowedHttpMethod(method)) {
-      throw "SecurityError: Request method not allowed";
+      throw new Error("SecurityError: Request method not allowed");
     }
 
     settings = {
@@ -20296,23 +20304,25 @@ exports.XMLHttpRequest = function() {
   };
 
   /**
-   * Sets a header for the request.
+   * Sets a header for the request or appends the value if one is already set.
    *
    * @param string header Header name
    * @param string value Header value
    */
   this.setRequestHeader = function(header, value) {
-    if (this.readyState != this.OPENED) {
-      throw "INVALID_STATE_ERR: setRequestHeader can only be called when state is OPEN";
+    if (this.readyState !== this.OPENED) {
+      throw new Error("INVALID_STATE_ERR: setRequestHeader can only be called when state is OPEN");
     }
     if (!isAllowedHttpHeader(header)) {
-      console.warn('Refused to set unsafe header "' + header + '"');
+      console.warn("Refused to set unsafe header \"" + header + "\"");
       return;
     }
     if (sendFlag) {
-      throw "INVALID_STATE_ERR: send flag is true";
+      throw new Error("INVALID_STATE_ERR: send flag is true");
     }
-    headers[header] = value;
+    header = headersCase[header.toLowerCase()] || header;
+    headersCase[header.toLowerCase()] = header;
+    headers[header] = headers[header] ? headers[header] + ', ' + value : value;
   };
 
   /**
@@ -20324,6 +20334,8 @@ exports.XMLHttpRequest = function() {
   this.getResponseHeader = function(header) {
     if (typeof header === "string"
       && this.readyState > this.OPENED
+      && response
+      && response.headers
       && response.headers[header.toLowerCase()]
       && !errorFlag
     ) {
@@ -20360,9 +20372,8 @@ exports.XMLHttpRequest = function() {
    * @return string Returns the request header or empty string if not set
    */
   this.getRequestHeader = function(name) {
-    // @TODO Make this case insensitive
-    if (typeof name === "string" && headers[name]) {
-      return headers[name];
+    if (typeof name === "string" && headersCase[name.toLowerCase()]) {
+      return headers[headersCase[name.toLowerCase()]];
     }
 
     return "";
@@ -20374,12 +20385,12 @@ exports.XMLHttpRequest = function() {
    * @param string data Optional data to send as request body.
    */
   this.send = function(data) {
-    if (this.readyState != this.OPENED) {
-      throw "INVALID_STATE_ERR: connection must be opened before send() is called";
+    if (this.readyState !== this.OPENED) {
+      throw new Error("INVALID_STATE_ERR: connection must be opened before send() is called");
     }
 
     if (sendFlag) {
-      throw "INVALID_STATE_ERR: send has already been called";
+      throw new Error("INVALID_STATE_ERR: send has already been called");
     }
 
     var ssl = false, local = false;
@@ -20387,34 +20398,35 @@ exports.XMLHttpRequest = function() {
     var host;
     // Determine the server
     switch (url.protocol) {
-      case 'https:':
+      case "https:":
         ssl = true;
         // SSL & non-SSL both need host, no break here.
-      case 'http:':
+      case "http:":
         host = url.hostname;
         break;
 
-      case 'file:':
+      case "file:":
         local = true;
         break;
 
       case undefined:
-      case '':
+      case null:
+      case "":
         host = "localhost";
         break;
 
       default:
-        throw "Protocol not supported.";
+        throw new Error("Protocol not supported.");
     }
 
     // Load files off the local filesystem (file://)
     if (local) {
       if (settings.method !== "GET") {
-        throw "XMLHttpRequest: Only GET method is supported";
+        throw new Error("XMLHttpRequest: Only GET method is supported");
       }
 
       if (settings.async) {
-        fs.readFile(url.pathname, 'utf8', function(error, data) {
+        fs.readFile(url.pathname, "utf8", function(error, data) {
           if (error) {
             self.handleError(error);
           } else {
@@ -20425,7 +20437,7 @@ exports.XMLHttpRequest = function() {
         });
       } else {
         try {
-          this.responseText = fs.readFileSync(url.pathname, 'utf8');
+          this.responseText = fs.readFileSync(url.pathname, "utf8");
           this.status = 200;
           setState(self.DONE);
         } catch(e) {
@@ -20440,21 +20452,28 @@ exports.XMLHttpRequest = function() {
     // to use http://localhost:port/path
     var port = url.port || (ssl ? 443 : 80);
     // Add query string if one is used
-    var uri = url.pathname + (url.search ? url.search : '');
+    var uri = url.pathname + (url.search ? url.search : "");
+
+    // Set the defaults if they haven't been set
+    for (var name in defaultHeaders) {
+      if (!headersCase[name.toLowerCase()]) {
+        headers[name] = defaultHeaders[name];
+      }
+    }
 
     // Set the Host header or the server may reject the request
-    headers["Host"] = host;
+    headers.Host = host;
     if (!((ssl && port === 443) || port === 80)) {
-      headers["Host"] += ':' + url.port;
+      headers.Host += ":" + url.port;
     }
 
     // Set Basic Auth if necessary
     if (settings.user) {
-      if (typeof settings.password == "undefined") {
+      if (typeof settings.password === "undefined") {
         settings.password = "";
       }
       var authBuf = new Buffer(settings.user + ":" + settings.password);
-      headers["Authorization"] = "Basic " + authBuf.toString("base64");
+      headers.Authorization = "Basic " + authBuf.toString("base64");
     }
 
     // Set content length header
@@ -20478,7 +20497,8 @@ exports.XMLHttpRequest = function() {
       path: uri,
       method: settings.method,
       headers: headers,
-      agent: false
+      agent: false,
+      withCredentials: self.withCredentials
     };
 
     // Reset error flag
@@ -20496,13 +20516,13 @@ exports.XMLHttpRequest = function() {
       self.dispatchEvent("readystatechange");
 
       // Handler for the response
-      function responseHandler(resp) {
+      var responseHandler = function responseHandler(resp) {
         // Set response var to the response we got back
         // This is so it remains accessable outside this scope
         response = resp;
         // Check for redirect
         // @TODO Prevent looped redirects
-        if (response.statusCode === 302 || response.statusCode === 303 || response.statusCode === 307) {
+        if (response.statusCode === 301 || response.statusCode === 302 || response.statusCode === 303 || response.statusCode === 307) {
           // Change URL to the redirect location
           settings.url = response.headers.location;
           var url = Url.parse(settings.url);
@@ -20513,12 +20533,13 @@ exports.XMLHttpRequest = function() {
             hostname: url.hostname,
             port: url.port,
             path: url.path,
-            method: response.statusCode === 303 ? 'GET' : settings.method,
-            headers: headers
+            method: response.statusCode === 303 ? "GET" : settings.method,
+            headers: headers,
+            withCredentials: self.withCredentials
           };
 
           // Issue the new request
-          request = doRequest(newOptions, responseHandler).on('error', errorHandler);
+          request = doRequest(newOptions, responseHandler).on("error", errorHandler);
           request.end();
           // @TODO Check if an XHR event needs to be fired here
           return;
@@ -20529,7 +20550,7 @@ exports.XMLHttpRequest = function() {
         setState(self.HEADERS_RECEIVED);
         self.status = response.statusCode;
 
-        response.on('data', function(chunk) {
+        response.on("data", function(chunk) {
           // Make sure there's some data
           if (chunk) {
             self.responseText += chunk;
@@ -20540,26 +20561,26 @@ exports.XMLHttpRequest = function() {
           }
         });
 
-        response.on('end', function() {
+        response.on("end", function() {
           if (sendFlag) {
-            // Discard the 'end' event if the connection has been aborted
+            // Discard the end event if the connection has been aborted
             setState(self.DONE);
             sendFlag = false;
           }
         });
 
-        response.on('error', function(error) {
+        response.on("error", function(error) {
           self.handleError(error);
         });
-      }
+      };
 
       // Error handler for the request
-      function errorHandler(error) {
+      var errorHandler = function errorHandler(error) {
         self.handleError(error);
-      }
+      };
 
       // Create the request
-      request = doRequest(options, responseHandler).on('error', errorHandler);
+      request = doRequest(options, responseHandler).on("error", errorHandler);
 
       // Node 0.4 and later won't accept empty data. Make sure it's needed.
       if (data) {
@@ -20585,38 +20606,36 @@ exports.XMLHttpRequest = function() {
         + "  responseText += chunk;"
         + "});"
         + "response.on('end', function() {"
-        + "fs.writeFileSync('" + contentFile + "', 'NODE-XMLHTTPREQUEST-STATUS:' + response.statusCode + ',' + responseText, 'utf8');"
+        + "fs.writeFileSync('" + contentFile + "', JSON.stringify({err: null, data: {statusCode: response.statusCode, headers: response.headers, text: responseText}}), 'utf8');"
         + "fs.unlinkSync('" + syncFile + "');"
         + "});"
         + "response.on('error', function(error) {"
-        + "fs.writeFileSync('" + contentFile + "', 'NODE-XMLHTTPREQUEST-ERROR:' + JSON.stringify(error), 'utf8');"
+        + "fs.writeFileSync('" + contentFile + "', JSON.stringify({err: error}), 'utf8');"
         + "fs.unlinkSync('" + syncFile + "');"
         + "});"
         + "}).on('error', function(error) {"
-        + "fs.writeFileSync('" + contentFile + "', 'NODE-XMLHTTPREQUEST-ERROR:' + JSON.stringify(error), 'utf8');"
+        + "fs.writeFileSync('" + contentFile + "', JSON.stringify({err: error}), 'utf8');"
         + "fs.unlinkSync('" + syncFile + "');"
         + "});"
-        + (data ? "req.write('" + data.replace(/'/g, "\\'") + "');":"")
+        + (data ? "req.write('" + JSON.stringify(data).slice(1,-1).replace(/'/g, "\\'") + "');":"")
         + "req.end();";
       // Start the other Node Process, executing this string
       var syncProc = spawn(process.argv[0], ["-e", execString]);
-      var statusText;
       while(fs.existsSync(syncFile)) {
         // Wait while the sync file is empty
       }
-      self.responseText = fs.readFileSync(contentFile, 'utf8');
+      var resp = JSON.parse(fs.readFileSync(contentFile, 'utf8'));
       // Kill the child process once the file has data
       syncProc.stdin.end();
       // Remove the temporary file
       fs.unlinkSync(contentFile);
-      if (self.responseText.match(/^NODE-XMLHTTPREQUEST-ERROR:/)) {
-        // If the file returned an error, handle it
-        var errorObj = self.responseText.replace(/^NODE-XMLHTTPREQUEST-ERROR:/, "");
-        self.handleError(errorObj);
+
+      if (resp.err) {
+        self.handleError(resp.err);
       } else {
-        // If the file returned okay, parse its data and move to the DONE state
-        self.status = self.responseText.replace(/^NODE-XMLHTTPREQUEST-STATUS:([0-9]*),.*/, "$1");
-        self.responseText = self.responseText.replace(/^NODE-XMLHTTPREQUEST-STATUS:[0-9]*,(.*)/, "$1");
+        response = resp.data;
+        self.status = resp.data.statusCode;
+        self.responseText = resp.data.text;
         setState(self.DONE);
       }
     }
@@ -20626,11 +20645,12 @@ exports.XMLHttpRequest = function() {
    * Called when an error is encountered to deal with it.
    */
   this.handleError = function(error) {
-    this.status = 503;
+    this.status = 0;
     this.statusText = error;
     this.responseText = error.stack;
     errorFlag = true;
     setState(this.DONE);
+    this.dispatchEvent('error');
   };
 
   /**
@@ -20643,6 +20663,7 @@ exports.XMLHttpRequest = function() {
     }
 
     headers = defaultHeaders;
+    this.status = 0;
     this.responseText = "";
     this.responseXML = "";
 
@@ -20655,6 +20676,7 @@ exports.XMLHttpRequest = function() {
       setState(this.DONE);
     }
     this.readyState = this.UNSENT;
+    this.dispatchEvent('abort');
   };
 
   /**
@@ -20701,7 +20723,7 @@ exports.XMLHttpRequest = function() {
    * @param int state New state
    */
   var setState = function(state) {
-    if (self.readyState !== state) {
+    if (state == self.LOADING || self.readyState !== state) {
       self.readyState = state;
 
       if (settings.async || self.readyState < self.OPENED || self.readyState === self.DONE) {
