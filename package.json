@@ -17,7 +17,7 @@
   },
   "testling": {
     "files": "test/*.js",
-        "browsers": [ "ie8", "ie9", "ff/13", "chrome/20" ]
+    "browsers": [ "opera", "ff", "chrome" ]
   },
 
   "scripts": {

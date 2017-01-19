@@ -25,8 +25,7 @@ test('my first dom test', function (t) {
 
 test('check interaction graph insertion', function (t) {
     t.plan(3);
-    var location = { nw_lat: 41.574361, nw_lng: -125.533448, se_lat: 32.750323, se_lng: -114.744873};
-    var options = { location: location, width: 1000, height: 400 };
+    var options = { bbox: '-125.533448,32.750323,-114.744873,41.574361', width: 1000, height: 400 };
 
     var ee = globi.addInteractionGraph(options);
     ee.appendGraphTo(document.body);
