@@ -12772,7 +12772,8 @@ globiData.findSourceNames = function (callback) {
     lookupSources('/source/?type=json.v2', function(sourceNames) {
         lookupSources('/dataset/?type=json.v2', function(sourcesAll) {
             var sourceNamespacesWithReport = sourceNames.map(function(source) { return source.name; });
-            var sourcesNoReport = sourcesAll.filter(function(source) { return sourceNamespacesWithReport.indexOf(source.name) !== -1; })
+            var sourcesNoReport = sourcesAll
+                .filter(function(source) { return sourceNamespacesWithReport.indexOf(source.name) === -1; })
             callback(sourceNames.concat(sourcesNoReport));
         });
     });
