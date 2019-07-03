@@ -73,9 +73,9 @@ Below is an example snippet on how to render the interaction graph widget.  You 
         ...
 ```
 
-If all goes well, you should see something like: [![interaction graph](https://s3-us-west-2.amazonaws.com/bioticinteractions/interaction-graph.png)](https://github.com/jhpoelen/eol-globi-js/tree/master/examples/bipartite-graph.html)
+If all goes well, you should see something like: [![interaction graph](./examples/interaction-graph.png)](https://github.com/jhpoelen/eol-globi-js/tree/master/examples/bipartite-graph.html)
 
-Another example, a [species interaction browser](https://github.com/jhpoelen/eol-globi-js/tree/master/examples/species_interaction_browser.html) should look something like: [![species_browser](https://s3-us-west-2.amazonaws.com/bioticinteractions/interaction-browser.png)](https://github.com/jhpoelen/eol-globi-js/tree/master/examples/species_interaction_browser.html)
+Another example, a [species interaction browser](https://github.com/jhpoelen/eol-globi-js/tree/master/examples/species_interaction_browser.html) should look something like: [![species_browser](./examples/interaction-browser.png)](https://github.com/jhpoelen/eol-globi-js/tree/master/examples/species_interaction_browser.html)
 
 
 # Running Tests
