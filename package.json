@@ -1,6 +1,6 @@
 {
   "name": "globi",
-  "version": "0.0.71",
+  "version": "0.0.72",
   "description": "embed EOL's Global Biotic Interactions Data http://github.com/jhpoelen/eol-globi-data/ in the browser",
   "main": "globi.js",
   "directories": {
@@ -8,8 +8,8 @@
   },
   "dependencies": {
     "d3": "~3.2.5",
-    "globi-data": "~0.0.54",
-    "jquery": ">=2.1",
+    "globi-data": "~0.0.55",
+    "jquery": "^3.4.1",
     "taxaprisma": "0.0.11"
   },
   "devDependencies": {
@@ -17,14 +17,16 @@
   },
   "testling": {
     "files": "test/*.js",
-    "browsers": [ "opera", "ff", "chrome" ]
+    "browsers": [
+      "opera",
+      "ff",
+      "chrome"
+    ]
   },
-
   "scripts": {
     "test": "testling",
     "prepublish": "browserify . --standalone globi -o globi-dist.js"
   },
-
   "repository": {
     "type": "git",
     "url": "git://github.com/jhpoelen/eol-globi-js.git"
