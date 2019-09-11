@@ -1,4 +1,4 @@
-var globi = require('../globi.js');
+var globi = require('../');
 var test = require('tape');
 
 

@@ -23,23 +23,6 @@ test('my first dom test', function (t) {
 
 });
 
-test('check interaction graph insertion', function (t) {
-    t.plan(3);
-    var options = { bbox: '-125.533448,32.750323,-114.744873,41.574361', width: 1000, height: 400 };
-
-    var ee = globi.addInteractionGraph(options);
-    ee.appendGraphTo(document.body);
-    ee.appendLegendTo(document.body);
-
-    t.ok(document.querySelector('.globi-interaction-graph'));
-    t.ok(document.querySelector('.globi-interaction-graph-legend'));
-
-    ee.on('ready', function () {
-        t.ok(true);
-    });
-
-});
-
 test('render taxon info box', function (t) {
     t.plan(2);
     var ee = globi.createTaxonInfo('Ariopsis felis');
