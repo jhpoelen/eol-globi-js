@@ -8,6 +8,9 @@ addons:
     packages:
     - xvfb
 
+cache:
+  npm: false
+
 before_install:
   - "npm install -g testling"
   - "npm install -g browserify"
