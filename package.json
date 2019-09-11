@@ -15,12 +15,7 @@
     "tape": "~1.0.4"
   },
   "testling": {
-    "files": "test/*.js",
-    "browsers": [
-      "opera",
-      "ff",
-      "chrome"
-    ]
+    "files": "test/*.js"
   },
   "scripts": {
     "test": "testling"
