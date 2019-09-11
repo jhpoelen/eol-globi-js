@@ -23,8 +23,7 @@
     ]
   },
   "scripts": {
-    "test": "testling",
-    "prepare": "browserify . --standalone -o globi-dist.js"
+    "test": "testling"
   },
   "repository": {
     "type": "git",
