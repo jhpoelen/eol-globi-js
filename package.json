@@ -1,13 +1,13 @@
 {
   "name": "globi",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "GloBI utility javascript library",
   "directories": {
     "example": "examples"
   },
   "index": "index.js",
   "dependencies": {
-    "globi-data": "~0.0.57",
+    "globi-data": "~0.0.58",
     "jquery": "^2.2.4",
     "taxaprisma": "0.0.11"
   },
